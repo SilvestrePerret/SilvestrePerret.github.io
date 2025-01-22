@@ -54,6 +54,7 @@
 
     const inputTextArea = document.getElementById('inputTextArea');
     const precisionInput = document.getElementById('precisionInput');
+    const targetSumInput = document.getElementById('targetSumInput');
     const clearBtn = document.getElementById('clearBtn');
     const solveBtn = document.getElementById('solveBtn');
     const resultArea = document.getElementById('resultArea');
@@ -141,7 +142,7 @@
       const tolerance = isNaN(epsilon) ? 0 : Math.abs(epsilon);
 
       // Get target sum from input; default to 0 if invalid
-      const targetSum = toFloat(document.getElementById('targetSumInput').value) || 0;
+      const targetSum = toFloat(targetSumInput.value) || 0;
 
       // Parse floats from the text area content
       const rawText = inputTextArea.value;
