@@ -22,9 +22,17 @@
     </div>
   </nav>
   <main class="mt-4">
-    <label class="label" for="precisionInput">Copiez ici les montants:</label>
-    <textarea id="inputTextArea" class="textarea" rows="10"
-      placeholder="Enter numbers separated by spaces or new lines..."></textarea><br>
+    <div class="columns">
+      <div class="column">
+        <label class="label" for="precisionInput">Copiez ici les montants:</label>
+        <textarea id="inputTextArea" class="textarea" rows="10"
+          placeholder="Enter numbers separated by spaces or new lines..."></textarea>
+      </div>
+      <div class="column">
+        <label class="label" for="targetSumInput">Cible:</label>
+        <input id="targetSumInput" class="input" type="number" step="0.01" value="0">
+      </div>
+    </div>
 
     <label class="label" for="precisionInput">Précision (tolérance):</label>
     <div class="field is-grouped">
