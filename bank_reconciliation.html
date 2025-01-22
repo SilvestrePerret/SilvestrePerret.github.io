@@ -33,7 +33,14 @@
       </div>
     </div>
 
-    <button id="clearBtn" class="button is-danger">Clear</button>
+    <label class="label" for="targetSumInput">Somme cible:</label>
+    <div class="field is-grouped">
+      <div class="control">
+        <input id="targetSumInput" class="input" type="number" step="0.01" value="0">
+      </div>
+    </div>
+
+    <button id="clearBtn" class="button is-danger">Effacer</button>
     <button id="solveBtn" class="button is-primary">Solve</button>
 
     <h2 class="mt-4 has-text-grey-light">Les montants s'annulant apparaissent ci-dessous (en couleurs différentes):</h2>
@@ -131,6 +138,9 @@
       const epsilon = parseFloat(precisionInput.value);
       const tolerance = isNaN(epsilon) ? 0 : Math.abs(epsilon);
 
+      // Get target sum from input; default to 0 if invalid
+      const targetSum = parseFloat(document.getElementById('targetSumInput').value) || 0;
+
       // Parse floats from the text area content
       const rawText = inputTextArea.value;
       const numberRegex = /-?\d{1,3}(?:[,.\s']\d{3})*(?:[.,]\d+)?/g;
@@ -164,7 +174,7 @@
             for (let i = 0; i < subsetSize; i++) {
               sum += arr[indices[i]];
             }
-            if (Math.abs(sum) <= tolerance) {
+            if (Math.abs(sum - targetSum) <= tolerance) {
               return indices;
             }
             let t = subsetSize - 1;
