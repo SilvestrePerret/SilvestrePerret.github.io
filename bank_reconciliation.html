@@ -33,7 +33,7 @@
       </div>
     </div>
 
-    <label class="label" for="targetSumInput">Somme cible:</label>
+    <label class="label" for="targetSumInput">Cible:</label>
     <div class="field is-grouped">
       <div class="control">
         <input id="targetSumInput" class="input" type="number" step="0.01" value="0">
@@ -135,11 +135,11 @@
       resultArea.innerHTML = '';
 
       // Get precision (tolerance) from input; default to 0 if invalid
-      const epsilon = parseFloat(precisionInput.value);
+      const epsilon = toFloat(precisionInput.value);
       const tolerance = isNaN(epsilon) ? 0 : Math.abs(epsilon);
 
       // Get target sum from input; default to 0 if invalid
-      const targetSum = parseFloat(document.getElementById('targetSumInput').value) || 0;
+      const targetSum = toFloat(document.getElementById('targetSumInput').value) || 0;
 
       // Parse floats from the text area content
       const rawText = inputTextArea.value;
