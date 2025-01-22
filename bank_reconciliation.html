@@ -127,8 +127,9 @@
       // Clear any existing results from previous runs
       resultArea.innerHTML = '';
 
-      // Parse the tolerance value
-      const tolerance = toFloat(precisionInput.value) || 0;
+      // Get precision (tolerance) from input; default to 0 if invalid
+      const epsilon = parseFloat(precisionInput.value);
+      const tolerance = isNaN(epsilon) ? 0 : Math.abs(epsilon);
 
       // Parse floats from the text area content
       const rawText = inputTextArea.value;
