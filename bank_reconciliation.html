@@ -15,39 +15,46 @@
   </style>
 </head>
 
-<body class="container is-max-desktop">
+<body>
   <nav class="navbar" role="navigation" aria-label="main navigation">
-    <div class="navbar-brand my-2">
-      <h1 class="title is-1 has-text-success">Rapprochements bancaires 🪙⚖️💰</p>
+    <div class="container is-max-desktop px-5">
+      <div class="navbar-brand my-2">
+        <h1 class="title is-1 has-text-success">Rapprochements bancaires 🪙⚖️💰</p>
+      </div>
     </div>
   </nav>
-  <main class="mt-4">
-    <div class="columns">
-      <div class="column">
-        <label class="label" for="precisionInput">Copiez ici les montants:</label>
-        <textarea id="inputTextArea" class="textarea" rows="10"
-          placeholder="Enter numbers separated by spaces or new lines..."></textarea>
+  <section class="section">
+    <div class="container is-max-desktop">
+
+      <div class="columns">
+        <div class="column">
+          <label class="label" for="precisionInput">Copiez ici les montants:</label>
+          <textarea id="inputTextArea" class="textarea" rows="10"
+            placeholder="Enter numbers separated by spaces or new lines..."></textarea>
+        </div>
+        <div class="column">
+          <label class="label" for="targetSumInput">Cible:</label>
+          <input id="targetSumInput" class="input" value="0">
+        </div>
       </div>
-      <div class="column">
-        <label class="label" for="targetSumInput">Cible:</label>
-        <input id="targetSumInput" class="input" value="0">
+
+      <label class="label" for="precisionInput">Précision (tolérance):</label>
+      <div class="field is-grouped">
+        <div class="control">
+          <input id="precisionInput" class="input" value="0">
+        </div>
       </div>
+
+      <button id="clearBtn" class="button is-danger">Effacer</button>
+      <button id="solveBtn" class="button is-primary">Solve</button>
+
+      <h2 class="mt-4 has-text-grey-light">Les montants dont la somme est équale à la cible apparaissent ci-dessous (en
+        couleurs différentes):</h2>
+      <hr>
+      <div id="progressArea" class="has-text-grey-light"></div>
+      <div id="resultArea" class="grid"></div>
     </div>
-
-    <label class="label" for="precisionInput">Précision (tolérance):</label>
-    <div class="field is-grouped">
-      <div class="control">
-        <input id="precisionInput" class="input" value="0">
-      </div>
-    </div>
-
-    <button id="clearBtn" class="button is-danger">Effacer</button>
-    <button id="solveBtn" class="button is-primary">Solve</button>
-
-    <h2 class="mt-4 has-text-grey-light">Les montants dont la somme est équale à la cible apparaissent ci-dessous (en
-      couleurs différentes):</h2>
-    <div id="resultArea" class="grid"></div>
-  </main>
+  </section>
 
 
   <script>
@@ -57,6 +64,7 @@
     const targetSumInput = document.getElementById('targetSumInput');
     const clearBtn = document.getElementById('clearBtn');
     const solveBtn = document.getElementById('solveBtn');
+    const progressArea = document.getElementById('progressArea');
     const resultArea = document.getElementById('resultArea');
 
     // Predefined color palette for each found subset
@@ -114,16 +122,81 @@
       return val;
     }
 
+    function parseInput() {
+      const epsilon = toFloat(precisionInput.value);
+      const tolerance = isNaN(epsilon) ? 0 : Math.abs(epsilon);
+      const targetSum = toFloat(targetSumInput.value);
+      const rawText = inputTextArea.value;
+      const numberRegex = /-?\d{1,3}(?:[,. ']\d{3})*(?:[.,]\d+)?/g;
+      const rawMatches = rawText.match(numberRegex) || [];
+      const numbers = rawMatches.map(toFloat).filter(n => !isNaN(n));
+      return { numbers, targetSum, tolerance };
+    }
+
+    function updateDOM(numbers) {
+      resultArea.innerHTML = '';
+      numbers.forEach(num => {
+        const div = document.createElement('div');
+        div.setAttribute('class', 'cell my-2 p-2');
+        div.textContent = num;
+        resultArea.appendChild(div);
+      });
+    }
+
+    function findTargetSumSubset(arr, targetSum, tolerance, subsetSize) {
+      const n = arr.length;
+      if (subsetSize > n) return null;
+      const indices = Array.from({ length: subsetSize }, (_, i) => i);
+      while (indices[0] < n - subsetSize + 1) {
+        let sum = 0;
+        for (let i = 0; i < subsetSize; i++) {
+          sum += arr[indices[i]];
+        }
+        if (Math.abs(sum - targetSum) <= tolerance) {
+          return indices;
+        }
+        let t = subsetSize - 1;
+        while (t != 0 && indices[t] == n - subsetSize + t) {
+          t--;
+        }
+        indices[t]++;
+        for (let i = t + 1; i < subsetSize; i++) {
+          indices[i] = indices[i - 1] + 1;
+        }
+      }
+      return null;
+    }
+
+    function colorSubsets(numbers, divRefs, targetSum, tolerance) {
+      let colorIndex = 0;
+      for (let subsetSize = 1; subsetSize <= numbers.length; subsetSize++) {
+        progressArea.textContent = `Searching for subsets of size: ${subsetSize}`;
+        while (true) {
+          const zeroSubsetIndices = findTargetSumSubset(numbers, targetSum, tolerance, subsetSize);
+          if (!zeroSubsetIndices) {
+            break;
+          }
+          const color = colors[colorIndex % colors.length];
+          zeroSubsetIndices.forEach((idx) => {
+            divRefs[idx].style.backgroundColor = color;
+          });
+          colorIndex++;
+          for (let i = zeroSubsetIndices.length - 1; i >= 0; i--) {
+            const removeIndex = zeroSubsetIndices[i];
+            numbers.splice(removeIndex, 1);
+            divRefs.splice(removeIndex, 1);
+          }
+        }
+      }
+      progressArea.textContent = 'Done!';
+    }
 
     // -----------------------------
     // 1. CLEAR BUTTON: Reset state
     // -----------------------------
     clearBtn.addEventListener('click', () => {
-      // Re-enable text area
       inputTextArea.disabled = false;
-      // Clear text area
       inputTextArea.value = '';
-      // Clear any existing results
       resultArea.innerHTML = '';
     });
 
@@ -132,93 +205,11 @@
     //    create paragraphs, find subsets, color
     // ------------------------------------------
     solveBtn.addEventListener('click', () => {
-      // Disable text area
       inputTextArea.disabled = true;
-      // Clear any existing results from previous runs
-      resultArea.innerHTML = '';
-
-      // Get precision (tolerance) from input
-      const epsilon = toFloat(precisionInput.value);
-      const tolerance = isNaN(epsilon) ? 0 : Math.abs(epsilon);
-
-      // Get target sum from input
-      const targetSum = toFloat(targetSumInput.value);
-
-      // Parse floats from the text area content
-      const rawText = inputTextArea.value;
-      const numberRegex = /-?\d{1,3}(?:[,. ']\d{3})*(?:[.,]\d+)?/g;
-      const rawMatches = rawText.match(numberRegex) || [];
-      const numbers = rawMatches.map(toFloat).filter(n => !isNaN(n));;
-
-      console.log('Parsed numbers:', numbers);
-      console.log('Target sum:', targetSum);
-      console.log('Tolerance:', tolerance);
-
-      // Create a paragraph for each number and store references
-      let divRefs = [];
-      numbers.forEach(num => {
-        const div = document.createElement('div');
-        div.setAttribute('class', 'cell my-2 p-2');
-        div.textContent = num;
-        resultArea.appendChild(div);
-        divRefs.push(div);
-      });
-
-
-      // Keep track of which color index to use next
-      let colorIndex = 0;
-
-      // Function to find **one** subset that sums to zero
-      // Returns array of indices, or null if none
-      function findZeroSubset(arr) {
-        // We'll iterate over all subsets (except the empty one)
-        // For small n, this is fine
-        const n = arr.length;
-        for (let subsetSize = 1; subsetSize <= n; subsetSize++) {
-          const indices = Array.from({ length: subsetSize }, (_, i) => i);
-          while (indices[0] < n - subsetSize + 1) {
-            let sum = 0;
-            for (let i = 0; i < subsetSize; i++) {
-              sum += arr[indices[i]];
-            }
-            if (Math.abs(sum - targetSum) <= tolerance) {
-              return indices;
-            }
-            let t = subsetSize - 1;
-            while (t != 0 && indices[t] == n - subsetSize + t) {
-              t--;
-            }
-            indices[t]++;
-            for (let i = t + 1; i < subsetSize; i++) {
-              indices[i] = indices[i - 1] + 1;
-            }
-          }
-        }
-        return null; // no subset found
-      }
-
-      // Keep looping as long as we can find a zero-sum subset
-      while (true) {
-        const zeroSubsetIndices = findZeroSubset(numbers);
-        if (!zeroSubsetIndices) {
-          break; // no more zero-sum subsets
-        }
-
-        // Color each element in the subset
-        const color = colors[colorIndex % colors.length];
-        zeroSubsetIndices.forEach((idx) => {
-          divRefs[idx].style.backgroundColor = color;
-        });
-        colorIndex++;
-
-        // Now remove these elements from both 'numbers' and 'divRefs'
-        // (Go in reverse order so we don't mess up the indexing)
-        for (let i = zeroSubsetIndices.length - 1; i >= 0; i--) {
-          const removeIndex = zeroSubsetIndices[i];
-          numbers.splice(removeIndex, 1);
-          divRefs.splice(removeIndex, 1);
-        }
-      }
+      const { numbers, targetSum, tolerance } = parseInput();
+      updateDOM(numbers);
+      const divRefs = Array.from(resultArea.children);
+      colorSubsets(numbers, divRefs, targetSum, tolerance);
     });
   </script>
 
