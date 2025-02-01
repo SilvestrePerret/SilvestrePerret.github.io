@@ -56,9 +56,7 @@
     </div>
   </section>
 
-
   <script>
-
     const inputTextArea = document.getElementById('inputTextArea');
     const precisionInput = document.getElementById('precisionInput');
     const targetSumInput = document.getElementById('targetSumInput');
@@ -143,20 +141,31 @@
       });
     }
 
-    async function findTargetSumSubset(arr, targetSum, tolerance, subsetSize) {
-      const n = arr.length;
+    // -----------------------------
+    // New helper: works on the activeIndices array.
+    // availableIndices is an array of indices (with respect to numbers and divRefs)
+    // For a given subset size, try all combinations of availableIndices,
+    // summing numbers[availableIndices[i]].
+    // When a matching subset is found, return an array of the actual indices.
+    // -----------------------------
+    async function findTargetSumSubsetActive(availableIndices, numbers, targetSum, tolerance, subsetSize) {
+      const n = availableIndices.length;
       if (subsetSize > n) return null;
+      // indices here are positions within availableIndices
       const indices = Array.from({ length: subsetSize }, (_, i) => i);
       while (indices[0] < n - subsetSize + 1) {
         let sum = 0;
         for (let i = 0; i < subsetSize; i++) {
-          sum += arr[indices[i]];
+          const actualIndex = availableIndices[indices[i]];
+          sum += numbers[actualIndex];
         }
         if (Math.abs(sum - targetSum) <= tolerance) {
-          return indices;
+          // Map back to the actual indices in the original numbers/divRefs arrays
+          return indices.map(i => availableIndices[i]);
         }
+        // Advance the combination
         let t = subsetSize - 1;
-        while (t != 0 && indices[t] == n - subsetSize + t) {
+        while (t !== 0 && indices[t] === n - subsetSize + t) {
           t--;
         }
         indices[t]++;
@@ -167,26 +176,32 @@
       return null;
     }
 
+    // -----------------------------
+    // NEW: colorSubsets using activeIndices instead of splicing arrays.
+    // -----------------------------
     async function colorSubsets(numbers, divRefs, targetSum, tolerance) {
       let colorIndex = 0;
-      for (let subsetSize = 1; subsetSize <= numbers.length; subsetSize++) {
+      // activeIndices holds the indices of numbers (and corresponding divs) that are still available.
+      let activeIndices = Array.from({ length: numbers.length }, (_, i) => i);
+
+      // We'll try subsets of size 1 up to the size of activeIndices.
+      for (let subsetSize = 1; activeIndices.length > 0 && subsetSize <= activeIndices.length; subsetSize++) {
         progressArea.textContent = `Searching for subsets of size: ${subsetSize}`;
         while (true) {
-          const zeroSubsetIndices = await findTargetSumSubset(numbers, targetSum, tolerance, subsetSize);
-          if (!zeroSubsetIndices) {
+          const subset = await findTargetSumSubsetActive(activeIndices, numbers, targetSum, tolerance, subsetSize);
+          if (!subset) {
             break;
           }
           const color = colors[colorIndex % colors.length];
-          zeroSubsetIndices.forEach((idx) => {
-            divRefs[idx].style.backgroundColor = color;
+          // Color the cells corresponding to the found subset.
+          subset.forEach(actualIndex => {
+            divRefs[actualIndex].style.backgroundColor = color;
           });
           colorIndex++;
-          for (let i = zeroSubsetIndices.length - 1; i >= 0; i--) {
-            const removeIndex = zeroSubsetIndices[i];
-            numbers.splice(removeIndex, 1);
-            divRefs.splice(removeIndex, 1);
-          }
+          // Remove the used indices from activeIndices.
+          activeIndices = activeIndices.filter(idx => !subset.includes(idx));
         }
+        // Allow UI to update.
         await new Promise(resolve => setTimeout(resolve, 0));
       }
       progressArea.textContent = 'Done!';
@@ -199,20 +214,23 @@
       inputTextArea.disabled = false;
       inputTextArea.value = '';
       resultArea.innerHTML = '';
+      progressArea.textContent = '';
     });
 
     // ------------------------------------------
     // 2. SOLVE BUTTON: Disable textarea, parse,
-    //    create paragraphs, find subsets, color
+    //    create number cells, find subsets, and color them.
     // ------------------------------------------
     solveBtn.addEventListener('click', async () => {
       inputTextArea.disabled = true;
       const { numbers, targetSum, tolerance } = await parseInput();
       await createNumbersCellElements(numbers);
+      // Get references to the div cells (they are not being removed now)
       const divRefs = Array.from(resultArea.children);
       await colorSubsets(numbers, divRefs, targetSum, tolerance);
     });
   </script>
+
 
 </body>
 
