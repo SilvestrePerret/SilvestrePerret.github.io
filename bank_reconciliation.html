@@ -204,12 +204,12 @@
     // 2. SOLVE BUTTON: Disable textarea, parse,
     //    create paragraphs, find subsets, color
     // ------------------------------------------
-    solveBtn.addEventListener('click', () => {
+    solveBtn.addEventListener('click', async () => {
       inputTextArea.disabled = true;
-      const { numbers, targetSum, tolerance } = parseInput();
-      createNumbersCellElements(numbers);
+      const { numbers, targetSum, tolerance } = await parseInput();
+      await createNumbersCellElements(numbers);
       const divRefs = Array.from(resultArea.children);
-      colorSubsets(numbers, divRefs, targetSum, tolerance);
+      await colorSubsets(numbers, divRefs, targetSum, tolerance);
     });
   </script>
 
