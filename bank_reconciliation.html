@@ -168,15 +168,18 @@
       return allSubsets;
     }
 
-    async function colorSubsets(numbers, divRefs, targetSum, tolerance) {
+    async function colorSubsets(numbers, divRefs, targetSum, tolerance, available) {
       let colorIndex = 0;
       for (let subsetSize = 1; subsetSize <= numbers.length; subsetSize++) {
         progressArea.textContent = `Searching for subsets of size: ${subsetSize}`;
-        const allSubsets = await findTargetSumSubset(numbers, targetSum, tolerance, subsetSize);
+        const allSubsets = await findTargetSumSubset(numbers.filter((_, idx) => available[idx]), targetSum, tolerance, subsetSize);
         allSubsets.forEach(zeroSubsetIndices => {
           const color = colors[colorIndex % colors.length];
           zeroSubsetIndices.forEach((idx) => {
-            divRefs[idx].style.backgroundColor = color;
+            if (available[idx]) {
+              divRefs[idx].style.backgroundColor = color;
+              available[idx] = false;
+            }
           });
           colorIndex++;
           for (let i = zeroSubsetIndices.length - 1; i >= 0; i--) {
@@ -208,7 +211,8 @@
       const { numbers, targetSum, tolerance } = await parseInput();
       await createNumbersCellElements(numbers);
       const divRefs = Array.from(resultArea.children);
-      await colorSubsets(numbers, divRefs, targetSum, tolerance);
+      const available = Array(numbers.length).fill(true);
+      await colorSubsets(numbers, divRefs, targetSum, tolerance, available);
     });
   </script>
 
