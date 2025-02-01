@@ -173,7 +173,6 @@
         progressArea.textContent = `Searching for subsets of size: ${subsetSize}`;
         while (true) {
           const zeroSubsetIndices = await findTargetSumSubset(numbers, targetSum, tolerance, subsetSize);
-          await new Promise(resolve => setTimeout(resolve, 0));
           if (!zeroSubsetIndices) {
             break;
           }
@@ -188,6 +187,7 @@
             divRefs.splice(removeIndex, 1);
           }
         }
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
       progressArea.textContent = 'Done!';
     }
