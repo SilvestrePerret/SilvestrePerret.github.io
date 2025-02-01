@@ -172,24 +172,20 @@
       let colorIndex = 0;
       for (let subsetSize = 1; subsetSize <= numbers.length; subsetSize++) {
         progressArea.textContent = `Searching for subsets of size: ${subsetSize}`;
-        while (true) {
-          const allSubsets = await findTargetSumSubset(numbers, targetSum, tolerance, subsetSize);
-          if (allSubsets.length === 0) {
-            break;
-          }
-          allSubsets.forEach(zeroSubsetIndices => {
-            const color = colors[colorIndex % colors.length];
-            zeroSubsetIndices.forEach((idx) => {
-              divRefs[idx].style.backgroundColor = color;
-            });
-            colorIndex++;
-            for (let i = zeroSubsetIndices.length - 1; i >= 0; i--) {
-              const removeIndex = zeroSubsetIndices[i];
-              numbers.splice(removeIndex, 1);
-              divRefs.splice(removeIndex, 1);
-            }
+        const allSubsets = await findTargetSumSubset(numbers, targetSum, tolerance, subsetSize);
+        allSubsets.forEach(zeroSubsetIndices => {
+          const color = colors[colorIndex % colors.length];
+          zeroSubsetIndices.forEach((idx) => {
+            divRefs[idx].style.backgroundColor = color;
           });
-          await new Promise(resolve => setTimeout(resolve, 0));
+          colorIndex++;
+          for (let i = zeroSubsetIndices.length - 1; i >= 0; i--) {
+            const removeIndex = zeroSubsetIndices[i];
+            numbers.splice(removeIndex, 1);
+            divRefs.splice(removeIndex, 1);
+          }
+        });
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
       progressArea.textContent = 'Done!';
     }
