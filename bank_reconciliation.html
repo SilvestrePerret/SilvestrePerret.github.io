@@ -133,7 +133,7 @@
       return { numbers, targetSum, tolerance };
     }
 
-    function updateDOM(numbers) {
+    function createNumbersCellElements(numbers) {
       resultArea.innerHTML = '';
       numbers.forEach(num => {
         const div = document.createElement('div');
@@ -207,7 +207,7 @@
     solveBtn.addEventListener('click', () => {
       inputTextArea.disabled = true;
       const { numbers, targetSum, tolerance } = parseInput();
-      updateDOM(numbers);
+      createNumbersCellElements(numbers);
       const divRefs = Array.from(resultArea.children);
       colorSubsets(numbers, divRefs, targetSum, tolerance);
     });
