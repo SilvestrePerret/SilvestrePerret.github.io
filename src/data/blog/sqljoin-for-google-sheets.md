@@ -79,3 +79,7 @@ The contenters are:
 ## Known limitations
 
 Custom functions have an overhead (due to serialization/deserialization and Apps Script™ execution time). Even for small tables, expect a few seconds of delay.
+
+---
+## Privacy Policy
+See [here](https://silvestreperret.com/legal#privacy)
