@@ -206,3 +206,9 @@ Clear nesting pattern. Each join is explicit and easy to understand. Adding a fo
 ---
 ## Privacy Policy
 See [here](https://silvestreperret.com/legal#privacy)
+
+---
+## Source & Support
+The source code is available (MIT license, i.e. it's free & open source) on [GitHub](https://github.com/SilvestrePerret/google-sheets-join).
+
+If you find any issues or have suggestions, please [open an issue on GitHub](https://github.com/SilvestrePerret/google-sheets-join/issues).
