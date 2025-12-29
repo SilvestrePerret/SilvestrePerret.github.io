@@ -11,8 +11,8 @@ export default function GameControls({
         <div className="mb-6 space-y-4 rounded-lg border border-border bg-muted/20 p-4">
             <div>
                 <label className="mb-2 flex items-center justify-between">
-                    <span className="font-semibold">Number of Games:</span>
-                    <span className="text-accent">{gameCount}</span>
+                    <p className="font-semibold my-0">Number of Games:</p>
+                    <p className="text-accent my-0">{gameCount}</p>
                 </label>
                 <input
                     type="range"
@@ -27,8 +27,8 @@ export default function GameControls({
 
             <div>
                 <label className="mb-2 flex items-center justify-between">
-                    <span className="font-semibold">Coin Fairness (P(Heads)):</span>
-                    <span className="text-accent">{coinFairness.toFixed(2)}</span>
+                    <p className="font-semibold my-0">Coin Fairness (P(Heads)):</p>
+                    <p className="text-accent my-0">{coinFairness.toFixed(2)}</p>
                 </label>
                 <input
                     type="range"
@@ -46,16 +46,16 @@ export default function GameControls({
                 <button
                     onClick={onPlay}
                     disabled={isPlaying}
-                    className="flex-1 rounded bg-accent px-4 py-2 font-semibold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex-1 rounded bg-accent px-4 py-2 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {isPlaying ? 'Playing...' : 'Play Games'}
+                    <p className="font-semibold text-background my-0">{isPlaying ? 'Playing...' : 'Play Games'}</p>
                 </button>
                 <button
                     onClick={onReset}
                     disabled={isPlaying}
                     className="rounded border border-border px-4 py-2 transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    Reset
+                    <p className="my-0">Reset</p>
                 </button>
             </div>
         </div>
