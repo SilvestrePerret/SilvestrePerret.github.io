@@ -15,5 +15,5 @@ I'm not bad when working solo but I **thrive** with some emulation from motivate
 
 When I'm not coding, you can find me hiking in the mountains, playing chess, or experimenting with new recipes in the kitchen. (I am an original, aren't I?).
 
-I'm always happy to connect with like-minded people, so feel free to [send me an email](mailto:silvestre.perret@example.com) or [reach out on LinkedIn](https://www.linkedin.com/in/silvestreperret/).
+I'm always happy to connect with like-minded people, so feel free to [send me an email](mailto:silvestre.perret@gmail.com) or [reach out on LinkedIn](https://www.linkedin.com/in/silvestreperret/).
 
