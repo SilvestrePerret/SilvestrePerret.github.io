@@ -30,18 +30,32 @@ Your current organization is not optimized for these types of queries. You have 
 
 ## Databases are magic
 
-Relational Databases (PostgreSQL, MySQL, SQLite, etc.) are like your library but on steroids. They store your data in tables with columns and rows, let you define relationships between your tables and provide you with a way to query that data. 
+Relational Databases (PostgreSQL, MySQL, SQLite, etc.) are like your library but on steroids. They use disk space instead of shelves. To keep things well ordered they ask you to define `tables` and `columns`. For your scrolls, you could create a 'Scroll' table with the following columns: 'author', 'title', 'content' and 'creation_date'.
 
-They use **indexes** (like your shelf organization) to speed up data retrieval. They often keep mutliple indexes per table to allow different access patterns. In fact, they also use many other tricks to be as fast as possible for the kind of queries they are optimized for.
+Then they take each scroll, pack it tightly into a succession of 0 and 1 which we call `record` (each record is a row of the 'Scroll' table) and store them on disk using `pages` (like your shelves). Like you did, they put records one after the other on the page and leave some empty space in each to accommodate new records. They also create a kind of map (called an `index`) that tells them on which page to find each record based on the value of a specific column (like your author-based shelf organization).
 
-And they are optimized for what we call **OLTP (Online Transaction Processing)** workloads. These are workloads where you have a lot of small, simple queries that read or write **individual records** (or small numbers of records). For example, looking up a user by their ID, inserting a new order, updating a product's price, etc. These workloads are very common in web applications, e-commerce platforms, and other similar systems.
+> Note: There are many more optimizations happening under the hood (*multiple indexes per table, indexes based on multiple columns, query optimizer, caches, etc.*), but that's the gist of it.
 
-## Statisticians are a pain in the a**
+If you want additional tables for even more organization (for example an 'Author' table), databases let you define relationships between your tables.
 
-This new type of queries that statisticians want to run are called **OLAP (Online Analytical Processing)** queries. These are complex queries that often involve aggregating large amounts of data, joining multiple sources, and performing calculations.
+Finally they provide you with a nice way to query that data: the **SQL (Structured Query Language)** language. You don't need to go through the 0 and 1 on the disk, you just write SQL queries like `SELECT * FROM Scroll WHERE title = 'Odyssey'` and the database takes care of the rest.
 
-By default¹, relational databases are not well-equipped to handle this kind of queries efficiently. You will need bigger and bigger instances (which cost more and more money) and still have slower and slower queries as your data grows.
+They are **FAST** for the kind of queries they are optimized for: **simple queries that read or write a couple of individual records**. For example: finding a scroll by its title, adding a new author in the 'Author' table, updating the content of a given scroll. 
 
-OLAP workloads require a different way of storing and querying your data:
+They can handle thousands of these queries per second. These workloads are very common in web applications, e-commerce platforms, and other similar systems: for example, looking up a user by their ID, inserting a new order, updating a product's price, etc. In the software world, we call these workloads **OLTP (Online Transaction Processing)** workloads.
+
+## Statisticians are kinda rude with databases
+
+This new type of queries that statisticians want to run are different. These are complex queries that involve aggregating large amounts of data, joining multiple sources, and performing calculations. We call these **OLAP (Online Analytical Processing)** workloads.
+
+By default¹, relational databases are not well-equipped to handle this kind of queries efficiently. You will need to use bigger and bigger servers for your database (which cost more and more money) and still have slower and slower queries as your data grows.
+
+**But** it exists a different kind of systems that are optimized for this: Data Warehouses (DuckDB, ClickHouse, BigQuery, Snowflake).
+
+These systems store data in a different way: instead of storing records one after the other (row-based storage), they store data by columns (columnar storage). This allows them to read only the relevant columns for a query, reducing the amount of data that needs to be processed
+
+They tries to use as few 0 and 1 on the disk as possible to represent the data. For example if 2 scrolls have the same author, they will store that the full author's name only once and then use references. This is called data compression.
+
+Finally, they assume that a large quantity of data will be processed and they parallelize the work aggressively and perform operations on multiple data points simultaneously.
 
 ¹ TODO
