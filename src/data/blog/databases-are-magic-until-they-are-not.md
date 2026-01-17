@@ -1,6 +1,6 @@
 ---
 author: Silvestre Perret
-title: 'Databases are magic until they are not'
+title: 'Databases are magic ... until ...'
 description: 'Databases are magic until they are not. OLTP vs OLAP explained.'
 slug: databases-are-magic-until-they-are-not
 pubDatetime: 2026-01-21T15:00:00Z
@@ -30,32 +30,44 @@ Your current organization is not optimized for these types of queries. You have 
 
 ## Databases are magic
 
-Relational Databases (PostgreSQL, MySQL, SQLite, etc.) are like your library but on steroids. They use disk space instead of shelves. To keep things well ordered they ask you to define `tables` and `columns`. For your scrolls, you could create a 'Scroll' table with the following columns: 'author', 'title', 'content' and 'creation_date'.
+Relational Databases (PostgreSQL, MySQL, SQLite, etc.) are like your library but on steroids. They uses disk space instead of shelves. To keep things well ordered They will ask you to define `tables` and `columns`. For your scrolls, you could create a 'Scroll' table with the following columns: 'author', 'title', 'content' and 'creation_date'.
 
-Then they take each scroll, pack it tightly into a succession of 0 and 1 which we call `record` (each record is a row of the 'Scroll' table) and store them on disk using `pages` (like your shelves). Like you did, they put records one after the other on the page and leave some empty space in each to accommodate new records. They also create a kind of map (called an `index`) that tells them on which page to find each record based on the value of a specific column (like your author-based shelf organization).
-
-> Note: There are many more optimizations happening under the hood (*multiple indexes per table, indexes based on multiple columns, query optimizer, caches, etc.*), but that's the gist of it.
+Then your database will take each scroll, pack it tightly into a succession of 0 and 1 which we call `record` (each record is a row of the 'Scroll' table) and store them on disk using `pages` (like your shelves). Like you did, it put records one after the other on the page and leaves some empty space in each to accommodate new records. It also creates a kind of map (called an `index`) that tells on which page to find each record based on the value of a specific column (like your author-based shelf organization).¹
 
 If you want additional tables for even more organization (for example an 'Author' table), databases let you define relationships between your tables.
 
 Finally they provide you with a nice way to query that data: the **SQL (Structured Query Language)** language. You don't need to go through the 0 and 1 on the disk, you just write SQL queries like `SELECT * FROM Scroll WHERE title = 'Odyssey'` and the database takes care of the rest.
 
-They are **FAST** for the kind of queries they are optimized for: **simple queries that read or write a couple of individual records**. For example: finding a scroll by its title, adding a new author in the 'Author' table, updating the content of a given scroll. 
+Relational Databases are optimized for a certain type of query: **simple queries that read or write a couple of individual records**. For example: finding a scroll by its title, adding a new author in the 'Author' table, updating the content of a given scroll. They are **FAST** for this kind of queries.
 
-They can handle thousands of these queries per second. These workloads are very common in web applications, e-commerce platforms, and other similar systems: for example, looking up a user by their ID, inserting a new order, updating a product's price, etc. In the software world, we call these workloads **OLTP (Online Transaction Processing)** workloads.
+They can handle thousands of these queries per second, dozens of queries being processed simultaneously. These workloads are very common in web applications, e-commerce platforms, and other similar systems: for example, looking up a user by their ID, inserting a new order, updating a product's price, etc. In the software world, we call these kind of queries: **OLTP (Online Transaction Processing)** workloads.
+
+¹ There are many optimizations available in OLTP databases, e.g. we can have multiple indexes per table, indexes based on multiple columns, partial indexes, caches, etc.
 
 ## Statisticians are kinda rude with databases
 
-This new type of queries that statisticians want to run are different. These are complex queries that involve aggregating large amounts of data, joining multiple sources, and performing calculations. We call these **OLAP (Online Analytical Processing)** workloads.
+This new type of queries that statisticians want to run are different. Answering "How many lines of text are there per scroll on average?" requires going through each row of your table 'Scroll', then counting the number of lines and aggregating these statistics to get the final result. These are complex queries that involve aggregating large amounts of data, joining multiple sources, and performing calculations. We call these kind of queries **OLAP (Online Analytical Processing)** workloads.
 
-By default¹, relational databases are not well-equipped to handle this kind of queries efficiently. You will need to use bigger and bigger servers for your database (which cost more and more money) and still have slower and slower queries as your data grows.
+By default, relational databases are not well-equipped to handle this kind of queries efficiently. You will need to use bigger and bigger servers for your database (which cost more and more money) and still have slower and slower queries as your data grows².
 
 **But** it exists a different kind of systems that are optimized for this: Data Warehouses (DuckDB, ClickHouse, BigQuery, Snowflake).
 
-These systems store data in a different way: instead of storing records one after the other (row-based storage), they store data by columns (columnar storage). This allows them to read only the relevant columns for a query, reducing the amount of data that needs to be processed
+These systems store data in a different way: instead of storing records one after the other (row-based storage), they store data by columns (columnar storage). Imagine being able to store all the titles in one place, all the authors in another, and so on. It's not practical if you want to get all the information regarding one scroll but on the other hand, if you want to count how many scrolls arrived last month, you need to read the content of the 'creation_date' column and ignore the rest. This allows data warehouses to reduce the amount of data that needs to be read from the disk and processed to answer a query.
 
-They tries to use as few 0 and 1 on the disk as possible to represent the data. For example if 2 scrolls have the same author, they will store that the full author's name only once and then use references. This is called data compression.
+They also try very hard to use as few 0 and 1 on the disk as possible to represent the data. For example if 10 scrolls have the same author, let's say 'Homer' (5 characters), instead of writing on the disk the same name ten times, write only 'H' (1 character) ten times and create a map to keep track that 'H' represents 'Homer'. The full author's name is stored only once and then references are used. Instead of writing 50 characters, you used ~16 characters, that's a ~70% reduction. This is one of the many data compression techniques these systems use.
 
-Finally, they assume that a large quantity of data will be processed and they parallelize the work aggressively and perform operations on multiple data points simultaneously.
+Finally, data warehouses can make the assumption that a query will require processing a large quantity of data so they optimize everything accordingly: they use vectorized operations, parallelize computations on multiple cores or even multiple machines³.
 
-¹ TODO
+² TODO
+
+³ TODO
+
+## What now?
+
+When it comes to data, chosing the right tool for the job is mostly asking yourself what kind of queries you'll need to process. How many queries per second ? How many records "touched" per query ? What will be the proportion of read vs write queries ?
+
+Then you can choose a database or a datawarehouse or both and use an hybrid approach (metadata on the database, actual data on the datawarehouse).
+
+With great intel, great engineering is <span class="line-through">easy</span> easier! 😊
+
+*The End*
