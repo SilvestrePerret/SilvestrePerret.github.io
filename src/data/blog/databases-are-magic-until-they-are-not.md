@@ -14,6 +14,9 @@ You have data. The best kind of data, the kind that fits nicely into tables: str
 
 ## The Great Librarian of Alexandria
 
+![a pile of scrolls](../../assets/images/scrolls.jpg)
+<div class="text-center width-full" style="margin-top:-1rem"><p><i>A pile of scrolls, courtesy of Nano Banana</i></p></div>
+
 Third century BC, you are chosen to be the first Chief Librarian of the Great Library of Alexandria. You have scrolls upon scrolls of knowledge, and your task is to organize them so that visitors can find the information they need quickly.
 
 You could organize the scrolls by topic, author, or date. How do you choose ? How do you deal with new scrolls arriving every day?
@@ -46,15 +49,15 @@ They can handle thousands of these queries per second, dozens of queries being p
 
 ## Statisticians are kinda rude with databases
 
-This new type of queries that statisticians want to run are different. Answering "How many lines of text are there per scroll on average?" requires going through each row of your table 'Scroll', then counting the number of lines and aggregating these statistics to get the final result. These are complex queries that involve aggregating large amounts of data, joining multiple sources, and performing calculations. We call these kind of queries **OLAP (Online Analytical Processing)** workloads.
+This new type of queries that statisticians want to run are different. These are complex queries that involve reading large amounts of data, performing calculations and aggregations. Answering "How many lines of text are there per scroll on average?" requires going through each 'Scroll' record, then counting the number of lines and aggregating these statistics over the whole table to get the final result.  We call these kind of queries **OLAP (Online Analytical Processing)** workloads.
 
-By default, relational databases are not well-equipped to handle this kind of queries efficiently. You will need to use bigger and bigger servers for your database (which cost more and more money) and still have slower and slower queries as your data grows².
+By default, traditional databases are not well-equipped to handle this kind of queries efficiently. You will need to use bigger and bigger servers for your database (which cost more and more money) and still have slower and slower queries as your data grows².
 
-**But** it exists a different kind of systems that are optimized for this: Data Warehouses (DuckDB, ClickHouse, BigQuery, Snowflake).
+**But** it exists a different kind of systems that are optimized for this: **Data Warehouses** (DuckDB, ClickHouse, BigQuery, Snowflake).
 
-These systems store data in a different way: instead of storing records one after the other (row-based storage), they store data by columns (columnar storage). Imagine being able to store all the titles in one place, all the authors in another, and so on. It's not practical if you want to get all the information regarding one scroll but on the other hand, if you want to count how many scrolls arrived last month, you need to read the content of the 'creation_date' column and ignore the rest. This allows data warehouses to reduce the amount of data that needs to be read from the disk and processed to answer a query.
+These systems **store data in a different way**: instead of storing records one after the other (row-based storage), they store data by columns (columnar storage). Imagine being able to store all the titles in one place, all the authors in another, and so on. It's not practical if you want to get all the information regarding one scroll but if your goal is to count how many scrolls arrived last month, you just need to read the content of the 'creation_date' column and ignore the rest. This allows data warehouses to reduce the amount of data that needs to be read from the disk and processed to answer a query.
 
-They also try very hard to use as few 0 and 1 on the disk as possible to represent the data. For example if 10 scrolls have the same author, let's say 'Homer' (5 characters), instead of writing on the disk the same name ten times, write only 'H' (1 character) ten times and create a map to keep track that 'H' represents 'Homer'. The full author's name is stored only once and then references are used. Instead of writing 50 characters, you used ~16 characters, that's a ~70% reduction. This is one of the many data compression techniques these systems use.
+They also try very hard to use as few 0 and 1 on the disk as possible to represent the data. For example if 10 scrolls have the same author, let's say 'Homer' (5 characters), instead of writing on the disk the same name ten times, write only 'H' (1 character) ten times and create a map to keep track that 'H' represents 'Homer'. The full author's name is stored only once and then references are used. Instead of writing 50 characters, you used ~16 characters, that's a ~70% reduction. This is one of the many **data compression** techniques these systems use.
 
 Finally, data warehouses can make the assumption that a query will require processing a large quantity of data so they optimize everything accordingly: they use vectorized operations, parallelize computations on multiple cores or even multiple machines³.
 
@@ -62,11 +65,15 @@ Finally, data warehouses can make the assumption that a query will require proce
 
 ³ TODO
 
+![Library](../../assets/images/library.jpg)
+
+<div class="text-center width-full" style="margin-top:-1rem"><p><i>Photo of the Rijksmuseum, Amsterdam by Will van Wingerden</i></p></div>
+
 ## What now?
 
-When it comes to data, chosing the right tool for the job is mostly asking yourself what kind of queries you'll need to process. How many queries per second ? How many records "touched" per query ? What will be the proportion of read vs write queries ?
+When it comes to data, chosing the right tool for the job is mostly answering the question "what kind of queries will we process?". How many queries per second ? How many records "touched" per query ? What will be the proportion of read vs write queries ?
 
-Then you can choose a database or a datawarehouse or both and use an hybrid approach (metadata on the database, actual data on the datawarehouse).
+Then you can choose a database or a datawarehouse or use an hybrid approach (metadata on the database, actual data on the datawarehouse).
 
 With great intel, great engineering is <span class="line-through">easy</span> easier! 😊
 
