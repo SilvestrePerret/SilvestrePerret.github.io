@@ -10,7 +10,7 @@ tags:
   - data
 ---
 
-_**Disclaimers**: This post contains several simplifications and analogies to help explain the core database concepts. Specifically, it doesn't cover the complexities that emerge from having (actually) **big data** that requires distributed systems._
+_**Disclaimers**: This post contains several simplifications to help explain the core database concepts. Specifically, it doesn't cover the distributed systems required to handle big data. **Only read footnotes if you want to dive deeper**🤿._
 
 
 You have data. The best kind of data, the kind that fits nicely into tables: structured data. Your precious users gave it to you so you can provide them value. What should you do with it? How should you store it?
@@ -36,9 +36,9 @@ Your current organization is not optimized for these types of queries. You have 
 
 ## Databases are magic
 
-Relational Databases (PostgreSQL, MySQL, SQLite, etc.) are like your library but on steroids. They use disk space instead of shelves. To keep things well-ordered, they will ask you to define `tables` and `columns`. For your scrolls, you could create a 'Scroll' table with the following columns: 'author', 'title', 'content' and 'creation_date'.
+Relational Databases ([PostgreSQL](https://www.postgresql.org/), [MySQL](https://www.mysql.com/), [SQLite](https://sqlite.org/), etc.) are like your library but on steroids. They use disk space instead of shelves. To keep things well-ordered, they will ask you to define `tables` and `columns`. For your scrolls, you could create a 'Scroll' table with the following columns: 'author', 'title', 'content' and 'creation_date'.
 
-Then your database will take each scroll, pack it tightly into a succession of 0 and 1 which we call `record` (each record is a row of the 'Scroll' table) and store them on disk using `pages` which are very much like your shelves. As you did, it puts records one after the other on the page and leaves some empty space in each to accommodate new records. It also creates a kind of map (called an `index`) that tells on which page to find each record based on the value of a specific column (like your author-based shelf organization).¹
+Then your database will take each scroll, pack it tightly into a succession of 0 and 1 which we call `record` (each record is a row of the 'Scroll' table) and store them on disk using `pages` which are very much like your shelves. As you did, it puts records one after the other on the page and leaves some empty space in each to accommodate new records. It also creates a kind of map (called an `index`) that tells on which page to find each record based on the value of a specific column (like your author-based shelf organization).[¹](#footnote-1)
 
 If you want additional tables for even more organization (for example an 'Author' table), databases let you define relationships between your tables.
 
@@ -48,25 +48,26 @@ These relational databases are optimized for a certain type of query: **simple q
 
 They can handle thousands of these queries per second, dozens of queries being processed simultaneously. These workloads are very common in web applications, e-commerce platforms, and other similar systems: for example, looking up a user by their ID, inserting a new order, updating a product's price, etc. In the software world, we call this kind of queries: **OLTP (Online Transaction Processing)** workloads.
 
-¹ There are many other optimizations available in OLTP databases, e.g. we can have multiple indexes per table, indexes based on multiple columns, partial indexes, caches, etc.
+<p id="footnote-1">¹ There are many other optimizations available in OLTP databases, e.g. we can have multiple indexes per table, indexes based on multiple columns, partial indexes, caches, etc.</p>
 
 ## Statisticians are kinda rude with databases
 
 This new type of queries that statisticians want to run are different. These are complex queries that involve reading large amounts of data, performing calculations and aggregations. Answering "How many lines of text are there per scroll on average?" requires going through each 'Scroll' record, then counting the number of lines and aggregating these statistics over the whole table to get the final result. We call this kind of queries **OLAP (Online Analytical Processing)** workloads.
 
-By default, traditional databases are not well-equipped to handle this kind of queries efficiently. You will need to use bigger and bigger servers for your database (which cost more and more money) and still have slower and slower queries as your data grows².
+By default, traditional databases are not well-equipped to handle this kind of queries efficiently. You will need to use bigger and bigger servers for your database (which cost more and more money) and still have slower and slower queries as your data grows[²](#footnote-2).
 
-**But** a different kind of systems called **Data Warehouses** (DuckDB, ClickHouse, BigQuery, Snowflake) are optimized for this:.
+**But** a different kind of systems called **Data Warehouses** ([DuckDB](https://duckdb.org/), [ClickHouse](https://clickhouse.com/), BigQuery, Snowflake) are optimized for this.
 
-These systems **store data in a different way**: instead of storing records one after the other (row-based storage), they store data by columns (`columnar storage`). Imagine being able to store all the titles in one place, all the authors in another, and so on. It's not practical if you want to get all the pieces of information regarding one scroll **but** if your goal is to count how many scrolls arrived last month, rather than having to go through all the records (i.e. read all the data), you now just need to read the content of the 'creation_date' column and ignore the rest. This allows data warehouses to reduce the amount of data that needs to be read from the disk and processed to answer a query.
+These systems store data in a different way: instead of storing records one after the other (**row-based storage**), they store data by columns (**columnar storage**). Imagine being able to store all the titles in one place, all the authors in another, and so on[³](#footnote-3). It's not practical if you want to get all the pieces of information regarding one scroll **but** if your goal is to count how many scrolls arrived last month, rather than having to go through all the records (i.e. read all the data), you now just need to read the content of the 'creation_date' column and ignore the rest. This allows data warehouses to reduce the amount of data that needs to be read from the disk and processed to answer a query.
 
-They also try very hard to use as few 0 and 1 on the disk as possible to represent the data. For example, if 10 scrolls have the same author, let's say 'Homer' (5 characters), instead of writing on the disk the same name ten times, write only 'H' (1 character) ten times and create a map to keep track that 'H' represents 'Homer'. The full author's name is stored only once and then references are used. Instead of writing 50 characters, you used ~16 characters, that's a ~70% reduction. This is one (very simplified) example of **dictionary encoding**, one of the many **data compression** techniques these systems use.
+Data Warehoures also try very hard to use as few 0 and 1 on the disk as possible to represent the data. For example, if 10 scrolls have the same author, let's say 'Homer' (5 characters), instead of writing on the disk the same name ten times, write only 'H' (1 character) ten times and create a map to keep track that 'H' represents 'Homer'. The full author's name is stored only once and then references are used. Instead of writing 50 characters, you used ~16 characters, that's a ~70% reduction. This is one (very simplified) example of **dictionary encoding**, one of the many **data compression** techniques these systems use.
 
-Finally, data warehouses can make the assumption that a query will require processing a large quantity of data so they optimize everything accordingly: they **parallelize computations** on multiple CPU cores or even multiple machines, leveraging **data partitioning**³.
+Finally, data warehouses can make the assumption that a query will require processing a large quantity of data so they optimize everything accordingly: they **parallelize computations** on multiple CPU cores or even multiple machines, leveraging **data partitioning**. Partitioning means splitting large tables into smaller ones based on a column. For example, you could partition the 'Scroll' table by year of creation. So all scrolls created in -201 BC are in one partition, -199 BC in another, etc. When a query involves a specific year, only the relevant partition needs to be scanned, reducing the amount of data read and speeding up the query.
 
-² Well, databases **are** magic, so even if they were not initially thought for it, there are still ways to transform them to handle OLAP queries better. Several Postgresql extensions (like Citus, TimescaleDB or pg_analytics from paradedb) manage to expand its capacities. Additionally, for specific use cases, it's possible to use materialized views, table partitioning, etc. to speed up OLAP queries on traditional databases.
+<p id="footnote-2">² Well, databases <b>are</b> magic, so even if they were not initially thought for it, there are still ways to transform them to handle OLAP queries better. Several Postgresql extensions manage to expand its capacities. Additionally, for specific use cases, it's possible to use some optimizations like materialized views, table partitioning, etc. to speed up OLAP queries on traditional databases.</p>
 
-³ Partitioning means splitting large tables into smaller ones based on a column. For example, you could partition the 'Scroll' table by year of creation. So all scrolls created in 2020 are in one partition, 2021 in another, etc. When a query involves a specific year, only the relevant partition needs to be scanned, reducing the amount of data read and speeding up the query.
+<p id="footnote-3">³ Data Warehouses systems generally also do have an equivalent of databases `pages`. Instead of storing records on a page, they store columns values one after the other. This is very handy if you only need a subset of the values of a column. See this cool <a href="https://sia.hackernoon.com/all-about-parquet-part-02-parquets-columnar-storage-model#h-how-parquet-organizes-data">article</a> for more details.</p>
+
 
 ![Library](../../assets/images/library.jpg)
 
