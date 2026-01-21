@@ -3,14 +3,14 @@ author: Silvestre Perret
 title: 'Databases are magic ... until ...'
 description: 'Databases are magic until they are not. OLTP vs OLAP explained.'
 slug: databases-are-magic-until-they-are-not
-pubDatetime: 2026-01-21T15:00:00Z
+pubDatetime: 2026-01-21T09:00:00Z
 featured: false
-draft: true
+draft: false
 tags:
   - data
 ---
 
-_**Disclaimers**: This post contains several simplifications and analogies to help explain the core database concepts. Specifically, it doesn't cover the complexities that emerge from having (actually) **big data** that requires more complex distributed systems._
+_**Disclaimers**: This post contains several simplifications and analogies to help explain the core database concepts. Specifically, it doesn't cover the complexities that emerge from having (actually) **big data** that requires distributed systems._
 
 
 You have data. The best kind of data, the kind that fits nicely into tables: structured data. Your precious users gave it to you so you can provide them value. What should you do with it? How should you store it?
