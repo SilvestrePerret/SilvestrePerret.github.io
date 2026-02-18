@@ -10,7 +10,7 @@ let image_embeddings = null;
 let image_inputs = null;
 
 // Model configuration
-const MODEL_ID = 'Xenova/sam-vit-base';
+const MODEL_ID = 'onnx-community/sam2.1-hiera-tiny-ONNX';
 
 self.onmessage = async (e) => {
     const { type, data } = e.data;

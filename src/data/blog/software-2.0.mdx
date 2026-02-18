@@ -68,30 +68,40 @@ This is a huge deal. Here is a demo:
 
 <SegmentAnythingDemo />
 
-It's a simple demo, it involves only one model (SAM from Meta, circa 2023) but it illustrates my point: **I did not pay for your usage**. The only things consumed were your bandwith, some time from your CPU or GPU and some of your device battery. 
+It's a simple demo, it involves only one pre-trained model (SAM2 from Meta, circa 2024) but it illustrates my point: **I did not pay for your usage**. The only things consumed were your bandwith, some time from your CPU or GPU and some of your device battery.
 
 Your pictures never left your device.
 
 You could do that for many other tasks: text extraction, image generation, real-time detection on video, forecasting, etc. 
 
 
-# 3. But how?
+## 3. But how?
 
-It's a combination of a few things: our phones and laptops getting more powerful, a lot of research and progress into extracting the impressive capabilities of large models into smaller ones (something called model distillation in the jargon), and the **Open Neural Network Exchange (ONNX)** initiative.
+It's a combination of a few things: our phones and laptops getting more powerful, our browsers start supporting GPU acceleration, a lot of research going into extracting the impressive capabilities of large models into smaller ones (something called model distillation in the jargon), and the **Open Neural Network Exchange (ONNX)** initiative.
 
-ONNX was started by Facebook and Microsoft in 2017. At first, it was a way to convert neural networks between different frameworks (PyTorch, TensorFlow, etc.). To achieve that, they created a common format for representing models from each framework. Then they added a runtime to be able to use these models in their new common format. Then the runtime was adapted to run on other platforms: browsers using WebAssembly and WebGL, but also adapted on the Java VM or in C# (which is widely used in game development).
+The history of ONNX is cool. It was started by Facebook and Microsoft in 2017. At first, it was a way to convert neural networks between different frameworks (PyTorch, TensorFlow, etc.). To achieve that, they ended creating a common format for representing models from each framework. Then they implemented a new way to run these models directly in their new common format. Then the runtime was adapted to run on other platforms: it simultaneous was integrated in the C#/.NET ecosystem and in browsers leveraging the progress of WebAssembly and WebGL.
+
+You are probably familiar with browsers as you are using one to read this. So I don't have to tell how ubiquitous they are. The fact that they can now run neural networks is remarquable. C#/.NET (if you don't know) is a widely used programming language, used extensively in enterprise software, but also in game development (Unity) and mobile apps (Xamarin).
+
+These trends are clearly modifying the landscape of technology and will change the expectations of users in the years to come. 
 
 
-# 4. What's the catch?
+## 4. What's the catch?
 
-There are a few. You can't expect all your users to have high-end GPUs or the latest iPhone. You won't be able to use the biggest and most powerful models available. Even intermediary models will be very slow to use for some users. So you need to build around that and adapt the model used to the device it's running on.
+There are a few. First, most users don't have a high-end GPUs or the latest iPhone. For them, the slowness of biggest and most performant models will be a problem. Even intermediary models can be very slow to use for some users without any kind of GPU acceleration. This add new requirements on the Software 2.0 stack: we build around that and have several models ready to tackle the user's task, including one matching the device they are using.
 
-Same thing for the bandwith requirements, you can't expect users to wait several minutes to download your model from the internet each time they want to use your app. It will be easy if your product is a mobile or a desktop app. For websites, it's tricky.
+Same thing for the bandwith requirements, nobody likes to wait several seconds or minutes before accessing the feature they are looking for. Downloading your model from the internet each time I open your app is probably an anti-pattern of "Software 2.0". I think the mobile or a desktop app will have an easier time adapting to that requirement, because they can leverage their install time to download models. For websites, it's trickier.
 
-Most of this has really started to take off in 2023. So it's still the early days and despite the tooling getting better, making "Software 2.0" still requires a lot of expertise most traditional software engineers simply don't have. But it's getting easier every year.
+Finally, most of this has really started to take off in 2023. So it's still the early days and despite the tooling getting better, you can expect some unpleasant surprises and many "learning opportunities". The different nature and maturity of "Software 1.0"  versus "Software 2.0" means making the latter requires a lot of expertise most traditional software engineers simply don't have.
 
-# Conclusion
+But it's getting easier every year. And there is only one way to get better at it.
 
-These Machine Learning applications are clearly outshined by the GenAI ones (ChatGPT, Gemini, Nano Banana, etc.) but it doesn't do justice to their ecosystem which is steadily improving. Their potential is growing and the obstacles to their adoption are shrinking. 
+## Conclusion & Prospects
 
-If they become easy enough to build and maintain so that a Claude Code or a GitHub Copilot can one-shot a "Software 2.0" feature in an existing app, we could see an explosion of these in the next few years.
+GenAI (ChatGPT, Gemini, Nano Banana, etc.) hype outshines everything else currently. And while I share the excitement of other regarding coding agents and the alike, I really feel this doesn't do justice to progresses of the rest of the field of Machine Learning. In a couple of years, "Software 2.0" went from a niche reserved to elite companies with a well-filled purse to a product half-commoditized by the Big Cloud Providers[⁴](#footnote-4) and now it's looking like we are reaching the next era for Machine Learning. An era where we will use neural networks locally on our smartphone without realizing it.[⁵](#footnote-5).
+
+Their potential is growing and the obstacles to their adoption are shrinking. If they become easy enough to build and maintain so that a Claude Code or a GitHub Copilot can one-shot a "Software 2.0" feature in an existing app, we could see an explosion of these in the next few years.
+
+<p id="footnote-4">⁴ The Big Cloud Provider (AWS, Azure, Google Cloud) all leverage good pre-trained models and offers services to do "object detection", "text translation", "document extraction". They often develop their own models and more rarely, they even open-source them, providing us with the next generation of pretrained models.</p>
+
+<p id="footnote-5">⁵ To be honest, that era already started a few years ago. Your smartphone camera is doing text extraction for example. But there is potential for much more advanced and custom applications.</p>
