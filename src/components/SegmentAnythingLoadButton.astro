@@ -1,0 +1,168 @@
+---
+// SegmentAnythingLoadButton.astro
+// Simple button to start loading the SAM model in the background
+---
+
+<div id="sam-load-button-container" class="sam-load-button-container">
+  <button id="sam-load-btn" class="sam-load-btn">
+    Download the demo (~200MB, i.e. &lt;2min of video in 4K )
+  </button>
+  <span id="sam-load-status" class="sam-load-status"></span>
+</div>
+
+<style>
+  .sam-load-button-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .sam-load-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 1rem;
+    background: var(--accent, #3498db);
+    color: white;
+    border: 1px solid var(--accent-dark, #2980b9);
+    transition: all 0.2s;
+  }
+
+  .sam-load-btn:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  .sam-load-btn:disabled {
+    background: var(--disabled-bg, #d1d5db);
+    color: var(--disabled-fg, #6b7280);
+    border-color: var(--disabled-border, #9ca3af);
+    cursor: not-allowed;
+  }
+
+  .sam-load-btn.loading {
+    background: var(--warning-bg, #f59e0b);
+    border-color: var(--warning-border, #d97706);
+  }
+
+  .sam-load-btn.ready {
+    background: var(--success-bg, #10b981);
+    border-color: var(--success-border, #059669);
+  }
+
+  .sam-load-status {
+    font-size: 0.875rem;
+    color: var(--foreground-muted, #666);
+  }
+</style>
+
+<script>
+  // Extend window with SAM global state
+  declare global {
+    interface Window {
+      samWorker: Worker | null;
+      samModelReady: boolean;
+      samModelLoading: boolean;
+      samSupportsWebGPU: boolean;
+    }
+  }
+
+  // Initialize global state if not already done
+  window.samWorker = window.samWorker ?? null;
+  window.samModelReady = window.samModelReady ?? false;
+  window.samModelLoading = window.samModelLoading ?? false;
+  window.samSupportsWebGPU = window.samSupportsWebGPU ?? false;
+
+  const loadBtn = document.getElementById("sam-load-btn") as HTMLButtonElement;
+  const statusSpan = document.getElementById("sam-load-status")!;
+
+  // Check WebGPU support
+  async function checkWebGPU() {
+    const ua = navigator.userAgent;
+    const isFirefox = /firefox/i.test(ua);
+    const isMobile = /android|iphone|ipad|ipod/i.test(ua);
+
+    // Force disable on Firefox Desktop
+    if (isFirefox && !isMobile) {
+      window.samSupportsWebGPU = false;
+    } else if ("gpu" in navigator) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const adapter = await (navigator as any).gpu.requestAdapter();
+        if (adapter) {
+          window.samSupportsWebGPU = true;
+        }
+      } catch {
+        // WebGPU not available
+      }
+    } else {
+      window.samSupportsWebGPU = false;
+    }
+  }
+
+  // Update button state based on global state
+  function updateButtonState() {
+    if (window.samModelReady) {
+      loadBtn.disabled = true;
+      loadBtn.textContent = "✅ Model Ready";
+      loadBtn.classList.remove("loading");
+      loadBtn.classList.add("ready");
+      statusSpan.textContent = "";
+    } else if (window.samModelLoading) {
+      loadBtn.disabled = true;
+      loadBtn.textContent = "⏳ Loading... (you can start reading 😉)";
+      loadBtn.classList.add("loading");
+      loadBtn.classList.remove("ready");
+    }
+  }
+
+  // Initialize worker and load model
+  function initializeWorker() {
+    if (window.samWorker || window.samModelLoading) return;
+
+    window.samModelLoading = true;
+    updateButtonState();
+
+    window.samWorker = new Worker("/segment-anything-worker.js", {
+      type: "module",
+    });
+
+    window.samWorker.addEventListener("message", (e: MessageEvent) => {
+      const { type, data } = e.data;
+
+      if (type === "loading") {
+        statusSpan.textContent = data;
+      } else if (type === "ready") {
+        window.samModelReady = true;
+        window.samModelLoading = false;
+        updateButtonState();
+        // Dispatch event so demo component knows model is ready
+        window.dispatchEvent(new CustomEvent("sam-model-ready"));
+      } else if (type === "error") {
+        statusSpan.textContent = `Error: ${data}`;
+        window.samModelLoading = false;
+        loadBtn.disabled = false;
+        loadBtn.textContent = "🤖 Retry Download";
+        loadBtn.classList.remove("loading");
+      }
+    });
+
+    window.samWorker.postMessage({
+      type: "load",
+      data: { useWebGPU: window.samSupportsWebGPU },
+    });
+  }
+
+  // Check initial state
+  checkWebGPU().then(() => {
+    updateButtonState();
+  });
+
+  // Listen for model ready events from other components
+  window.addEventListener("sam-model-ready", updateButtonState);
+
+  // Click handler
+  loadBtn.addEventListener("click", () => {
+    initializeWorker();
+  });
+</script>

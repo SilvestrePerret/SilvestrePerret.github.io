@@ -1,0 +1,684 @@
+---
+// SegmentAnythingDemo.astro
+// Interactive Segment Anything demo using transformers.js
+// Requires the model to be loaded (either via SegmentAnythingLoadButton or its own button)
+---
+
+<div id="sam-demo" class="sam-demo">
+  <!-- Load Model Banner (shown if model not loaded yet) -->
+  <div id="sam-consent" class="sam-consent">
+    <div class="sam-consent-content">
+      <p>
+        <strong>🤖 Interactive Demo</strong><br />
+        This demo runs AI directly in your browser. Click below to start the demo
+        (~200MB).
+      </p>
+      <div class="sam-consent-buttons">
+        <button id="sam-consent-btn" class="sam-btn sam-btn-primary">
+          Start Demo
+        </button>
+        <button id="sam-skip-btn" class="sam-btn sam-btn-secondary">
+          Skip Demo
+        </button>
+      </div>
+      <p id="sam-webgpu-status" class="sam-webgpu-status"></p>
+    </div>
+  </div>
+
+  <!-- Demo Container (hidden until model loaded) -->
+  <div id="sam-main" class="sam-main sam-hidden">
+    <div id="sam-container" class="sam-container">
+      <label id="sam-upload-button" for="sam-upload" class="sam-upload-button">
+        <svg
+          width="25"
+          height="25"
+          viewBox="0 0 25 25"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fill="currentColor"
+            d="M3.5 24.3a3 3 0 0 1-1.9-.8c-.5-.5-.8-1.2-.8-1.9V2.9c0-.7.3-1.3.8-1.9.6-.5 1.2-.7 2-.7h18.6c.7 0 1.3.2 1.9.7.5.6.7 1.2.7 2v18.6c0 .7-.2 1.4-.7 1.9a3 3 0 0 1-2 .8H3.6Zm0-2.7h18.7V2.9H3.5v18.7Zm2.7-2.7h13.3c.3 0 .5 0 .6-.3v-.7l-3.7-5a.6.6 0 0 0-.6-.2c-.2 0-.4 0-.5.3l-3.5 4.6-2.4-3.3a.6.6 0 0 0-.6-.3c-.2 0-.4.1-.5.3l-2.7 3.6c-.1.2-.2.4 0 .7.1.2.3.3.6.3Z"
+          >
+          </path>
+        </svg>
+        <span>Click to upload image</span>
+        <span id="sam-example" class="sam-example">(or try example)</span>
+      </label>
+      <canvas id="sam-mask-output"></canvas>
+      <!-- Loading overlay for embedding extraction -->
+      <div id="sam-loading-overlay" class="sam-loading-overlay sam-hidden">
+        <div class="sam-spinner"></div>
+        <span>Computing embeddings...</span>
+      </div>
+    </div>
+
+    <p id="sam-status" class="sam-status"></p>
+
+    <div id="sam-controls" class="sam-controls">
+      <button id="sam-reset-image" class="sam-btn">Reset image</button>
+      <button id="sam-clear-points" class="sam-btn">Clear points</button>
+      <button id="sam-cut-mask" class="sam-btn" disabled>Cut mask</button>
+    </div>
+
+    <p class="sam-info">
+      Left click = positive points (include), right click = negative points
+      (exclude).
+    </p>
+
+    <input id="sam-upload" type="file" accept="image/*" class="sam-hidden" />
+  </div>
+
+  <!-- Disabled State -->
+  <div id="sam-disabled" class="sam-disabled sam-hidden">
+    <p>Demo disabled. Refresh the page to try again.</p>
+  </div>
+</div>
+
+<style>
+  .sam-demo {
+    margin: 2rem 0;
+    font-family: inherit;
+  }
+
+  .sam-hidden {
+    display: none !important;
+  }
+
+  /* Consent Banner */
+  .sam-consent {
+    border: 2px solid var(--accent, #3498db);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    background: var(--background-alt, #f8f9fa);
+    text-align: center;
+  }
+
+  .sam-consent-content p {
+    margin: 0 0 1rem 0;
+    line-height: 1.6;
+  }
+
+  .sam-consent-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .sam-webgpu-status {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: var(--foreground-muted, #666);
+  }
+
+  /* Buttons */
+  .sam-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+  }
+
+  .sam-btn-primary {
+    background: var(--accent, #3498db);
+    color: white;
+    border: 1px solid var(--accent-dark, #2980b9);
+  }
+
+  .sam-btn-primary:hover {
+    opacity: 0.9;
+  }
+
+  .sam-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border, #ccc);
+    color: inherit;
+  }
+
+  .sam-btn:disabled {
+    background: var(--disabled-bg, #d1d5db);
+    color: var(--disabled-fg, #6b7280);
+    border-color: var(--disabled-border, #9ca3af);
+    cursor: not-allowed;
+  }
+
+  /* Main Demo */
+  .sam-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sam-container {
+    position: relative;
+    width: 640px;
+    height: 420px;
+    max-width: 100%;
+    border: 2px dashed var(--border, #d1d5db);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    cursor: pointer;
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sam-upload-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 1.125rem;
+    cursor: pointer;
+    color: inherit;
+  }
+
+  .sam-upload-button svg {
+    pointer-events: none;
+  }
+
+  .sam-example {
+    font-size: 0.875rem;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .sam-example:hover {
+    color: var(--accent, #2563eb);
+  }
+
+  #sam-mask-output {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
+  /* Loading overlay */
+  .sam-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    color: white;
+    font-size: 1rem;
+    z-index: 10;
+  }
+
+  .sam-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: sam-spin 1s linear infinite;
+  }
+
+  @keyframes sam-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .sam-status {
+    min-height: 1.5rem;
+    margin: 0.5rem 0;
+    text-align: center;
+  }
+
+  .sam-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .sam-controls .sam-btn {
+    background: var(--accent, #3498db);
+    color: white;
+    border: 1px solid var(--accent-dark, #2980b9);
+  }
+
+  .sam-info {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--foreground-muted, #6b7280);
+    text-align: center;
+  }
+
+  /* Point icons - must be :global() since they're created dynamically in JS */
+  :global(.sam-icon) {
+    height: 16px;
+    width: 16px;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  /* Disabled State */
+  .sam-disabled {
+    border: 2px dashed var(--border, #d1d5db);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    text-align: center;
+    color: var(--foreground-muted, #6b7280);
+  }
+</style>
+
+<script>
+  // Extend window with SAM global state
+  declare global {
+    interface Window {
+      samWorker: Worker | null;
+      samModelReady: boolean;
+      samModelLoading: boolean;
+      samSupportsWebGPU: boolean;
+    }
+  }
+
+  // Initialize global state if not already done
+  window.samWorker = window.samWorker ?? null;
+  window.samModelReady = window.samModelReady ?? false;
+  window.samModelLoading = window.samModelLoading ?? false;
+  window.samSupportsWebGPU = window.samSupportsWebGPU ?? false;
+
+  // Preload point icons
+  const BASE_URL =
+    "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/";
+  const EXAMPLE_URLS = [
+    BASE_URL + "airport.jpg",
+    BASE_URL + "astronaut.png",
+    BASE_URL + "cats.jpg",
+    BASE_URL + "corgi.jpg",
+    BASE_URL + "football-match.jpg",
+  ];
+
+  function sample(array: string[]) {
+    return array[Math.floor(Math.random() * array.length)];
+  }
+
+  const starIcon = new Image();
+  starIcon.src = BASE_URL + "star-icon.png";
+  starIcon.className = "sam-icon";
+
+  const crossIcon = new Image();
+  crossIcon.src = BASE_URL + "cross-icon.png";
+  crossIcon.className = "sam-icon";
+
+  // Local state
+  let isEncoded = false;
+  let lastPoints: Array<{ point: number[]; label: number }> | null = null;
+  let imageDataURI: string | null = null;
+
+  // DOM Elements
+  const consentSection = document.getElementById("sam-consent")!;
+  const consentBtn = document.getElementById("sam-consent-btn")!;
+  const skipBtn = document.getElementById("sam-skip-btn")!;
+  const webgpuStatus = document.getElementById("sam-webgpu-status")!;
+  const mainSection = document.getElementById("sam-main")!;
+  const disabledSection = document.getElementById("sam-disabled")!;
+  const container = document.getElementById("sam-container")!;
+  const uploadButton = document.getElementById(
+    "sam-upload-button"
+  ) as HTMLElement;
+  const exampleBtn = document.getElementById("sam-example")!;
+  const maskCanvas = document.getElementById(
+    "sam-mask-output"
+  ) as HTMLCanvasElement;
+  const statusLabel = document.getElementById("sam-status")!;
+  const fileUpload = document.getElementById("sam-upload") as HTMLInputElement;
+  const resetBtn = document.getElementById("sam-reset-image")!;
+  const clearBtn = document.getElementById("sam-clear-points")!;
+  const cutBtn = document.getElementById("sam-cut-mask") as HTMLButtonElement;
+  const loadingOverlay = document.getElementById("sam-loading-overlay")!;
+
+  // Check WebGPU support
+  async function checkWebGPU() {
+    const ua = navigator.userAgent;
+    const isFirefox = /firefox/i.test(ua);
+    const isMobile = /android|iphone|ipad|ipod/i.test(ua);
+
+    // Force disable on Firefox Desktop
+    if (isFirefox && !isMobile) {
+      window.samSupportsWebGPU = false;
+      webgpuStatus.textContent =
+        "⚠️ WebGPU disabled on Firefox Desktop - using CPU (slower but works fine)";
+    } else if ("gpu" in navigator) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const adapter = await (navigator as any).gpu.requestAdapter();
+        if (adapter) {
+          window.samSupportsWebGPU = true;
+          webgpuStatus.textContent =
+            "✅ WebGPU supported - faster inference available!";
+        }
+      } catch {
+        // WebGPU not available
+      }
+    } else {
+      window.samSupportsWebGPU = false;
+      webgpuStatus.textContent =
+        "⚠️ WebGPU not supported - using CPU (slower but works fine)";
+    }
+  }
+
+  // Show demo UI (hide consent banner)
+  function showDemo() {
+    consentSection.classList.add("sam-hidden");
+    mainSection.classList.remove("sam-hidden");
+    if (window.samModelReady) {
+      statusLabel.textContent = "Ready! Upload an image to segment.";
+    } else if (window.samModelLoading) {
+      statusLabel.textContent = "Loading model...";
+    }
+  }
+
+  // Initialize worker and load model
+  function initializeWorker() {
+    if (window.samWorker) {
+      // Worker already exists, just attach our listener
+      window.samWorker.addEventListener("message", handleWorkerMessage);
+      if (window.samModelReady) {
+        statusLabel.textContent = "Ready! Upload an image to segment.";
+      }
+      return;
+    }
+
+    if (window.samModelLoading) return;
+
+    window.samModelLoading = true;
+    statusLabel.textContent = "Loading model...";
+
+    window.samWorker = new Worker("/segment-anything-worker.js", {
+      type: "module",
+    });
+
+    window.samWorker.addEventListener("message", handleWorkerMessage);
+
+    window.samWorker.postMessage({
+      type: "load",
+      data: { useWebGPU: window.samSupportsWebGPU },
+    });
+  }
+
+  function handleWorkerMessage(e: MessageEvent) {
+    const { type, data } = e.data;
+
+    switch (type) {
+      case "loading":
+        statusLabel.textContent = data;
+        break;
+
+      case "ready":
+        window.samModelReady = true;
+        window.samModelLoading = false;
+        statusLabel.textContent = "Ready! Upload an image to segment.";
+        // Dispatch event so other components know model is ready
+        window.dispatchEvent(new CustomEvent("sam-model-ready"));
+        break;
+
+      case "error":
+        statusLabel.textContent = `Error: ${data}`;
+        break;
+
+      case "segment_result":
+        if (data === "start") {
+          statusLabel.textContent = "...";
+          loadingOverlay.classList.remove("sam-hidden");
+        } else {
+          statusLabel.textContent = "Embedding extracted! Click to segment.";
+          loadingOverlay.classList.add("sam-hidden");
+          isEncoded = true;
+        }
+        break;
+
+      case "decode_result":
+        if (!isEncoded) return;
+
+        const { mask, scores } = data;
+
+        // Update canvas dimensions
+        if (
+          maskCanvas.width !== mask.width ||
+          maskCanvas.height !== mask.height
+        ) {
+          maskCanvas.width = mask.width;
+          maskCanvas.height = mask.height;
+        }
+
+        // Create context and pixel data
+        const context = maskCanvas.getContext("2d")!;
+        const imageData = context.createImageData(
+          maskCanvas.width,
+          maskCanvas.height
+        );
+
+        // Select best mask
+        const numMasks = scores.length;
+        let bestIndex = 0;
+        for (let i = 1; i < numMasks; ++i) {
+          if (scores[i] > scores[bestIndex]) {
+            bestIndex = i;
+          }
+        }
+        statusLabel.textContent = `Segment score: ${scores[bestIndex].toFixed(2)}`;
+
+        // Fill mask with color
+        const pixelData = imageData.data;
+        for (let i = 0; i < pixelData.length; ++i) {
+          if (mask.data[numMasks * i + bestIndex] === 1) {
+            const offset = 4 * i;
+            pixelData[offset] = 0; // red
+            pixelData[offset + 1] = 114; // green
+            pixelData[offset + 2] = 189; // blue
+            pixelData[offset + 3] = 255; // alpha
+          }
+        }
+
+        context.putImageData(imageData, 0, 0);
+        break;
+    }
+  }
+
+  function decode() {
+    window.samWorker!.postMessage({ type: "decode", data: lastPoints });
+  }
+
+  function clearPointsAndMask() {
+    lastPoints = null;
+
+    // Remove point icons
+    document.querySelectorAll(".sam-icon").forEach(e => e.remove());
+
+    // Disable cut button
+    cutBtn.disabled = true;
+
+    // Clear mask canvas
+    maskCanvas
+      .getContext("2d")!
+      .clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+
+    statusLabel.textContent = "Click to segment.";
+  }
+
+  function segment(data: string) {
+    isEncoded = false;
+    if (!window.samModelReady) {
+      statusLabel.textContent = "Loading model...";
+    }
+    imageDataURI = data;
+
+    // Update UI
+    container.style.backgroundImage = `url(${data})`;
+    uploadButton.style.display = "none";
+    cutBtn.disabled = true;
+
+    // Send to worker
+    window.samWorker!.postMessage({ type: "segment", data });
+  }
+
+  function addIcon({ point, label }: { point: number[]; label: number }) {
+    const icon = (
+      label === 1 ? starIcon : crossIcon
+    ).cloneNode() as HTMLImageElement;
+    icon.style.left = `${point[0] * 100}%`;
+    icon.style.top = `${point[1] * 100}%`;
+    icon.style.marginTop = "0px";
+    icon.style.marginBottom = "0px";
+    icon.style.borderWidth = "0px";
+
+    container.appendChild(icon);
+  }
+
+  function clamp(x: number, min = 0, max = 1) {
+    return Math.max(Math.min(x, max), min);
+  }
+
+  function getPoint(e: MouseEvent) {
+    const bb = container.getBoundingClientRect();
+    const mouseX = clamp((e.clientX - bb.left) / bb.width);
+    const mouseY = clamp((e.clientY - bb.top) / bb.height);
+
+    return {
+      point: [mouseX, mouseY],
+      label: e.button === 2 ? 0 : 1, // right click = negative
+    };
+  }
+
+  // Check initial state on load
+  checkWebGPU().then(() => {
+    // If model is already loaded (by SegmentAnythingLoadButton), show demo directly
+    if (window.samModelReady) {
+      showDemo();
+      // Attach our message handler to existing worker
+      if (window.samWorker) {
+        window.samWorker.addEventListener("message", handleWorkerMessage);
+      }
+    } else if (window.samModelLoading && window.samWorker) {
+      // Model is loading, show demo and attach handler
+      showDemo();
+      window.samWorker.addEventListener("message", handleWorkerMessage);
+    }
+  });
+
+  // Listen for model ready events from other components
+  window.addEventListener("sam-model-ready", () => {
+    if (window.samWorker) {
+      window.samWorker.addEventListener("message", handleWorkerMessage);
+    }
+    statusLabel.textContent = "Ready! Upload an image to segment.";
+  });
+
+  // Consent button handler
+  consentBtn.addEventListener("click", () => {
+    showDemo();
+    initializeWorker();
+  });
+
+  // Skip button handler
+  skipBtn.addEventListener("click", () => {
+    consentSection.classList.add("sam-hidden");
+    disabledSection.classList.remove("sam-hidden");
+  });
+
+  // Event listeners
+  clearBtn.addEventListener("click", clearPointsAndMask);
+
+  resetBtn.addEventListener("click", () => {
+    isEncoded = false;
+    imageDataURI = null;
+
+    window.samWorker!.postMessage({ type: "reset" });
+
+    clearPointsAndMask();
+
+    cutBtn.disabled = true;
+    container.style.backgroundImage = "none";
+    uploadButton.style.display = "flex";
+    statusLabel.textContent = "Ready! Upload an image to segment.";
+  });
+
+  fileUpload.addEventListener("change", e => {
+    const target = e.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e2 => segment(e2.target?.result as string);
+    reader.readAsDataURL(file);
+  });
+
+  exampleBtn.addEventListener("click", e => {
+    e.preventDefault();
+    e.stopPropagation();
+    segment(sample(EXAMPLE_URLS));
+  });
+
+  // Click to segment (removed hover behavior)
+  container.addEventListener("mousedown", e => {
+    if (e.button !== 0 && e.button !== 2) return;
+    if (!isEncoded) return;
+
+    if (!lastPoints) {
+      lastPoints = [];
+      cutBtn.disabled = false;
+    }
+
+    const point = getPoint(e);
+    lastPoints.push(point);
+    addIcon(point);
+
+    decode();
+  });
+
+  // Disable context menu on container
+  container.addEventListener("contextmenu", e => e.preventDefault());
+
+  // Cut mask button
+  cutBtn.addEventListener("click", () => {
+    const [w, h] = [maskCanvas.width, maskCanvas.height];
+
+    const maskContext = maskCanvas.getContext("2d")!;
+    const maskPixelData = maskContext.getImageData(0, 0, w, h);
+
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = async () => {
+      const imageCanvas = new OffscreenCanvas(w, h);
+      const imageContext = imageCanvas.getContext("2d")!;
+      imageContext.drawImage(image, 0, 0, w, h);
+      const imagePixelData = imageContext.getImageData(0, 0, w, h);
+
+      const cutCanvas = new OffscreenCanvas(w, h);
+      const cutContext = cutCanvas.getContext("2d")!;
+      const cutPixelData = cutContext.getImageData(0, 0, w, h);
+
+      for (let i = 3; i < maskPixelData.data.length; i += 4) {
+        if (maskPixelData.data[i] > 0) {
+          for (let j = 0; j < 4; ++j) {
+            const offset = i - j;
+            cutPixelData.data[offset] = imagePixelData.data[offset];
+          }
+        }
+      }
+      cutContext.putImageData(cutPixelData, 0, 0);
+
+      const link = document.createElement("a");
+      link.download = "segment.png";
+      link.href = URL.createObjectURL(await cutCanvas.convertToBlob());
+      link.click();
+      link.remove();
+    };
+    image.src = imageDataURI!;
+  });
+</script>
