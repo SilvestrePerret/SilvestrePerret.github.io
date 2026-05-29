@@ -7,6 +7,7 @@ pubDatetime: 2026-02-18T08:00:00Z
 featured: false
 draft: false
 tags:
+  - software
   - machine-learning
   - artificial-intelligence
 ---
@@ -19,19 +20,18 @@ _**Disclaimer**: Cool interactive demo below. But first some text._
 <SegmentAnythingLoadButton />
 
 
-In 2017 (almost 10 years ago, ouch! aïe!), Andrej Karpathy[¹](#footnote-1) wrote a now famous [blog post](https://karpathy.medium.com/software-2-0-a64152b37c35) about Machine Learning, titled **"Software 2.0"**. The core idea is quite straightforward: on one hand "Software 1.0" is the kind of software we are used to since the dawn of computers, it requires explicitly written rules (`if` statements, `for` loops, etc.); on the other hand, "Software 2.0" relies on neural networks to learn these rules implicitly from data. The process of writing code becomes a data-centric work: you collect data, clean it, use it to train not one but hundreds of models, evaluate them, select the best one, connect it with the rest of the project, deploy it and finally monitor it closely.
+In 2017 (almost 10 years ago, ouch! aïe!), Andrej Karpathy[^1] wrote a now famous [blog post](https://karpathy.medium.com/software-2-0-a64152b37c35) about Machine Learning, titled **"Software 2.0"**. The core idea is quite straightforward: on one hand "Software 1.0" is the kind of software we are used to since the dawn of computers, it requires explicitly written rules (`if` statements, `for` loops, etc.); on the other hand, "Software 2.0" relies on neural networks to learn these rules implicitly from data. The process of writing code becomes a data-centric work: you collect data, clean it, use it to train not one but hundreds of models, evaluate them, select the best one, connect it with the rest of the project, deploy it and finally monitor it closely.
 
-It's a great and inspirational read that has aged quite well, especially if you consider the tsunami of changes we are going through since ChatGPT-3 release, so I encourage you to read it[²](#footnote-2) 😊. In this blog post, we'll show that **Software 2.0 has a lot going for it in 2026**, and that we could see an explosion of it in the next few years.
+It's a great and inspirational read that has aged quite well, especially if you consider the tsunami of changes we are going through since ChatGPT-3 release, so I encourage you to read it[^2] 😊. In this blog post, we'll show that **Software 2.0 has a lot going for it in 2026**, and that we could see an explosion of it in the next few years.
 
-<p id="footnote-1">¹ Andrej Karpathy: ex-Director of AI at Tesla, ex-OpenAI co-founder, also the guy who coined the term "vibe coding" one year ago ([link to wikipedia](https://en.wikipedia.org/wiki/Andrej_Karpathy))</p>
-
-<p id="footnote-2">² If you prefer a video/podcast form, I can only recommend his more recent [follow up talk](https://www.youtube.com/watch?v=LCEmiRjPEtQ) which also includes some thoughts about LLMs</p>
+[^1]: Andrej Karpathy: ex-Director of AI at Tesla, ex-OpenAI co-founder, also the guy who coined the term "vibe coding" one year ago ([link to wikipedia](https://en.wikipedia.org/wiki/Andrej_Karpathy))
+[^2]: If you prefer a video/podcast form, I can only recommend his more recent [follow up talk](https://www.youtube.com/watch?v=LCEmiRjPEtQ) which also includes some thoughts about LLMs
 
 ## 1. Data Science was pain in 2017
 
 To understand the trend and why the evolution we are seeing is significant, we need to first discuss why it was so **painful** to build Software 2.0 / Machine Learning products in 2017. 
 
-It was **expensive**, **slow** and with **no guarantee of success**. Very few people were trained in AI before 2010[³](#footnote-3) and most of them were either in academia, ad tech or finance. Everyone else was more or less stuck with juniors fresh out of school with little professional experience and no one to mentor them. The tooling was too young (Databricks and Dataiku were both founded in 2013, Pytorch and Huggingface were released in 2016) or not there yet (AWS SageMaker was released 2 months after Andrej's post, MLflow in 2018). Finally, we didn't have access to a lot of open pre-trained neural networks at that time and they were not as good as today's. So you often had to train from scratch, which requires even more skills and experience to avoid wasting months of work and thousands of dollars in compute.
+It was **expensive**, **slow** and with **no guarantee of success**. Very few people were trained in AI before 2010[^3] and most of them were either in academia, ad tech or finance. Everyone else was more or less stuck with juniors fresh out of school with little professional experience and no one to mentor them. The tooling was too young (Databricks and Dataiku were both founded in 2013, Pytorch and Huggingface were released in 2016) or not there yet (AWS SageMaker was released 2 months after Andrej's post, MLflow in 2018). Finally, we didn't have access to a lot of open pre-trained neural networks at that time and they were not as good as today's. So you often had to train from scratch, which requires even more skills and experience to avoid wasting months of work and thousands of dollars in compute.
 
 <Alert type="info">
 **What are "pretrained models"?** Pretrained models are neural networks that have already been trained on a large dataset to do a useful but generic task. For example, ResNet (which was all the rage in 2017) was trained on a dataset of 1.2 million images to classify images (ie. answer the question 'does this image contain a person? a cat? a dog?'). 
@@ -45,7 +45,7 @@ What most companies did at the time was to try to cut corners and they did "prot
 
 For the record, every step involved in the data centric process of Software 2.0 is **hard**. Many new roles emerged from that: data engineer, data analyst, data scientist, machine learning engineer, MLOps engineer, etc.
 
-<p id="footnote-3">³ AI-related degree doubled between 2011 and 2021. Source: [CSET Leading the Charge: A Look at the Top-Producing AI Programs in U.S. Colleges and Universities](https://cset.georgetown.edu/publication/leading-the-charge-a-look-at-the-top-producing-ai-programs-in-u-s-colleges-and-universities/). And all that was before ChatGPT.</p>
+[^3]: AI-related degree doubled between 2011 and 2021. Source: [CSET Leading the Charge: A Look at the Top-Producing AI Programs in U.S. Colleges and Universities](https://cset.georgetown.edu/publication/leading-the-charge-a-look-at-the-top-producing-ai-programs-in-u-s-colleges-and-universities/). And all that was before ChatGPT.
 
 
 ## 2. The current landscape 
@@ -98,10 +98,9 @@ But it's getting easier every year. And there is only one way to get better at i
 
 ## Conclusion & Prospects
 
-GenAI (ChatGPT, Gemini, Nano Banana, etc.) hype outshines everything else currently. And while I share the excitement of other regarding coding agents and the alike, I really feel this doesn't do justice to progresses of the rest of the field of Machine Learning. In a couple of years, "Software 2.0" went from a niche reserved to elite companies with a well-filled purse to a product half-commoditized by the Big Cloud Providers[⁴](#footnote-4) and now it's looking like we are reaching the next era for Machine Learning. An era where we will use neural networks locally on our smartphone without realizing it[⁵](#footnote-5).
+GenAI (ChatGPT, Gemini, Nano Banana, etc.) hype outshines everything else currently. And while I share the excitement of other regarding coding agents and the alike, I really feel this doesn't do justice to progresses of the rest of the field of Machine Learning. In a couple of years, "Software 2.0" went from a niche reserved to elite companies with a well-filled purse to a product half-commoditized by the Big Cloud Providers[^4] and now it's looking like we are reaching the next era for Machine Learning. An era where we will use neural networks locally on our smartphone without realizing it[^5].
 
 Their potential is growing and the obstacles to their adoption are shrinking. If they become easy enough to build and maintain so that a Claude Code or a GitHub Copilot can one-shot a "Software 2.0" feature in an existing app, we could see an explosion of these in the next few years.
 
-<p id="footnote-4">⁴ The Big Cloud Provider (AWS, Azure, Google Cloud) all leverage good pre-trained models and offers services to do "object detection", "text translation", "document extraction". They often develop their own models and more rarely, they even open-source them, providing us with the next generation of pretrained models.</p>
-
-<p id="footnote-5">⁵ To be honest, that era already started a few years ago. Your smartphone camera is doing text extraction for example. But there is potential for much more advanced and custom applications.</p>
+[^4]: The Big Cloud Provider (AWS, Azure, Google Cloud) all leverage good pre-trained models and offers services to do "object detection", "text translation", "document extraction". They often develop their own models and more rarely, they even open-source them, providing us with the next generation of pretrained models.
+[^5]: To be honest, that era already started a few years ago. Your smartphone camera is doing text extraction for example. But there is potential for much more advanced and custom applications.

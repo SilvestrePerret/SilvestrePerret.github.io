@@ -91,6 +91,31 @@
     pre {
       @apply focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-dashed;
     }
+
+    /* ===== GFM Footnotes ===== */
+    .footnotes {
+      @apply mt-8 border-t border-border pt-4 text-sm opacity-75 italic;
+
+      h2 {
+        @apply sr-only;
+      }
+
+      ol {
+        @apply list-decimal pl-5;
+      }
+
+      li {
+        @apply mb-2;
+      }
+
+      a[data-footnote-backref] {
+        @apply no-underline text-accent;
+      }
+    }
+
+    sup a[data-footnote-ref] {
+      @apply text-accent no-underline;
+    }
   }
 
   /* ===== Code Blocks & Syntax Highlighting ===== */
