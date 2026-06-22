@@ -1,0 +1,162 @@
+---
+author: Silvestre Perret
+title: 'From Next-Word Predictor to Copilots'
+description: 'From Next-Word Predictor to Copilots'
+slug: from-llms-to-agents
+pubDatetime: 2026-06-21T12:00:00Z
+featured: false
+draft: false
+tags:
+  -  software
+  - artificial-intelligence
+---
+import { Image } from 'astro:assets';
+import Alert from '../../components/Alert.astro';
+import persianCatMemeAiAgentImage from "../../assets/images/persian-cat-meme-ai-agent.jpg";
+
+_**Disclaimers**: This post contains several simplifications to help explain some core concepts of Large Language Models (LLMs). **Only read footnotes if you want to dive deeper**🤿._
+
+In the [previous article](/posts/software-3-0), we looked at  what **Large Language Models** (LLMs) are and how they came to be. We ended up with the rise of GPT-3, a raw next-word predictor that was the first glimpse of the future to come.
+
+Today, we are closing the gap between that "prehistoric" time and the "AI agents" we are now used to. Let's discuss the ideas you need to build Copilots or Assistants, starting from a raw next-word predictor.
+
+As we will see, there are quite a few new concepts to cover and while none is particularly difficult, thinking about their interactions can be overwhelming. So grab a hot drink, get comfy and buckle up.
+
+
+## The first "conversation" with the Computer
+
+LLMs are different from any previous machine learning model for one key reason: **their input changes their behavior**. You can transform one model into a translator, a sentiment detector, or a typo corrector by changing its "prompt", i.e. their input, the text you feed it.
+
+The very natural question that follows is: **What is the optimal "input" to get the behavior I want?**. In the early days (2020-2023), people experimented a lot and discovered many empirical "tricks" to statically improve the odds of getting the desired behavior from the LLM. For example, to get a french-to-english translator, you could use the following prompt:
+
+```
+INPUT: "Bonjour, comment ça va ?"
+OUTPUT: "Hello, how are you ?"
+
+INPUT: "Maudit Français."
+OUTPUT: "Bloody French."
+
+INPUT: <INSERT ACTUAL TEXT TO TRANSLATE HERE>
+OUTPUT:
+```
+
+Receiving this prompt, the LLM (at the time still a raw next-word predictor) would predict the next words of that paragraph and was very likely to return your translated text.
+
+Something else that emerged quickly was the option to "have a conversation" with the LLM. By feeding it a prompt that looked like a conversation (or a play in book form), you could get it to follow the flow of that conversation and answer your questions. For example:
+
+```
+Sylvester: "Hi"
+Tweety: 
+```
+
+Would make the LLM generate a response like `"Hello Sylvester, how are you today ?"`. Then, you could invoke the LLM a second time with:
+
+```
+Sylvester: "Hi"
+Tweety: "Hello Sylvester, how are you today ?"
+Sylvester: "I'm good, how about you ?"
+Tweety:
+```
+
+Rinse and repeat and you have a conversation with the machine. Your first ever conversion of the Third Kind (🤖≈👽).
+
+But keep in mind that these early LLMs were not trying to "have a conversation", nor to be helpful. They were doing one thing: predicting the most likely next word in the piece of text you sent them. This crude setup didn't really help them stay consistent over long multi-turn conversations. And if your text looked like an online newspaper comment section or a Reddit thread, the LLM would predict accordingly (i.e. not so helpful most of the time).
+
+<Alert type="info">
+We just highlighted **two key characteristics of LLMs**. 
+
+First, there is **no concept of continuity** from the point of view of the model itself. Once it's done generating a response, "it" disappears in the ether.
+
+To mimic the continuity you expect from a conversation, the next time you invoke the model, you need to provide it with the full history of the conversation (or at least a sizable chunk) so the model knows what is going on and can predict the answer accordingly.
+
+At their very core, they are **"stateless"**. Nothing survives a text generation.
+
+Second, the total amount of text fed into the model during the "conversation" **increases quadratically** with the number of "turns". 
+
+If we normalize the size of each turn input and output to 1, we get the following sequence:
+| Turn | Input Size | Output Size | Total Turn | Total Conversation |
+|------|------------|-------------|-------|------------|
+| 1    | 1          | 1           | 2     | 2          |
+| 2    | 2          | 1           | 3     | 5          |
+| 3    | 3          | 1           | 4     | 9          |
+| 4    | 4          | 1           | 5     | 14         |
+| ...  | ...        | ...         | ...   | ...        |
+| n    | n          | 1           | n+1   | ~n²        |
+
+This was a significant challenge in the early days and was partially solved with "input caching" but let's keep that for a future blog post 😉.
+</Alert>
+
+## Training a better conversational LLM
+
+Now, we know how to "have a conversation" with a primitive next-word predictor. Let's make a more advanced and **useful** LLM.
+
+First, we'll keep the initial training step, now called **pre-training**. The foundation still is a very good next-word predictor. So gather all the text you are able to fathom: books (published or not), encyclopedias, all the web, all the scanned documents, all the transcripts of conversations, videos or radio shows, newspapers, codebases, etc. In all languages. Then, find a <span class="line-through">few</span> bunch of GPUs and use them to train an initial model to predict the next word in all of that text. The pre-training text corpus is too huge to be properly reviewed or curated.
+
+Then, we enter the next phase called **supervised fine-tuning (SFT)**. This is a key step to reshape the LLM "behavior". The idea is simple. You gather a few thousand high-quality conversations mimicking the behavior you want the model to exhibit and you train the pre-trained model on them. While the pretraining dataset is very chaotic, the SFT dataset is very coherent and help changing the LLMs weights to make it less a generalistic next-word predictor and more a specialized conversational model.
+
+Now, you have a LLM that tries to fake being helpful. "fake" because fundamentally the LLM still tries to predict the next word and when it gets it right, it gets its reward, else it doesn't. We need to switch our "reward mechanism" to a higher level one, one that would reward the LLM when it produces a correct answer or at least an answer appreciated by humans. We are entering the **post-training** phase.
+
+The first post-training approach "discovered" in 2022[^1] at OpenAI is called **Reinforcement Learning from Human Feedback (RLHF)** ([paper](https://arxiv.org/abs/2203.02155)). The idea is to ask a question to the LLM and make it generate 2 answers, then you ask a human to choose which one they prefer, finally you use that feedback to modify the LLM's weights so it is more likely to produce the preferred answer in the future. 
+
+But LLMs are very slow learners, they need billions of such pair of answers and preferences. And human time is expensive. So instead of asking actual humans to give billions of feedback, you gather a few million human feedbacks and train a secondary Neural Network to predict which answer a human would prefer. If your **Reward Model** is good enough, you don't need an actual human in your training loop anymore. So you can scale to billions of feedbacks.
+
+To get a post-training approach that actually rewards correct answers, we had to wait for almost 3 years (an eternity in AI time). In December 2024, the Allen Institute for AI and DeepSeek published a new approach called **Reinforcement Learning from Verifiable Rewards (RLVR)** ([paper 1](https://arxiv.org/abs/2411.15124), [paper 2](https://arxiv.org/abs/2501.12948)). The idea is even simpler, you ask questions to the LLM whose answer can be easily and deterministically verified. Think of math problems, logic puzzles, coding problems, etc. If the answer is correct, you give a reward, else you don't. Again, you'll need to do that many many times. Quoting [Karpathy](https://karpathy.bearblog.dev/year-in-review-2025/): 
+> [During RLVR], the LLMs spontaneously develop strategies that look like 'reasoning' to humans - they learn to break down problem solving into intermediate calculations and they learn a number of problem solving strategies.
+
+There you have it, the main ingredients to build an "helpful" LLM: **pre-training, SFT, RLHF and RLVR**[^2]. Now it's up to you to mix them in the best way you can think of[^3]. 
+
+[^1]: RLHF was actually discovered way earlier in 2017 by a joint team from OpenAI and DeepMind. They applied the idea of learning a reward model from human feedback to improve the performance of a reinforcement learning agent playing Atari games ([paper](https://arxiv.org/abs/1706.03741)). 2022 was still the first time this idea was applied to LLMs.
+
+[^2]: Training LLMs is a complex, secretive and quickly evolving process. If the steps presented above are well documented, their exact combination is a well-kept secret in all the leading U.S. based labs (OpenAI, Anthropic, Google, etc.). They never share the key details of their training process (even when they publish papers), their Chinese competitors (DeepSeek, Alibaba, etc.) are more open and share a lot more.
+
+
+[^3]: How you combine these steps would deserve a whole other blog post as you can get fairly creative with it. For example, in the [DeepSeek R1 paper](https://arxiv.org/abs/2501.12948), the authors used a "self-improvement" loop where they ask the LLM to generate new RLVR questions and answers to autonomously expand its post-training dataset, then they trained on the newly generated dataset and repeat the process as long as they are able to measure improvements.
+
+<Image src={persianCatMemeAiAgentImage} alt="A persian cat room guardian meme saying 'My AI Agent, Where is it?" layout="responsive" class="lg:max-w-1/2" />
+<div class="text-center lg:max-w-1/2 mx-auto" style="margin-top:-1rem"><p><i>Almost there, hang in there!</i></p></div>
+
+## Tools and Reasoning
+
+We are getting close! Our newly trained LLM is now trying its best to be "helpful" (not because it likes you but because that's how it got its reward). But we still miss 2 things.
+
+First, we need a way to let the LLM "acts" (rather than just being able to answer us). Using the same tricks as above, you could get an early LLM to "make a web search" with the following prompt:
+
+```
+INPUT: "What is the capital of France ?"
+SEARCH: "capital of France"
+OUTPUT: [REDACTED SEARCH RESULTS]
+
+INPUT: <INSERT ACTUAL QUESTION HERE>
+SEARCH:
+```
+
+The LLM would predict the next word after "SEARCH:" and was likely to produce a search query. Then, you could automatically parse that query, execute it on a search engine and feed the results back to the LLM (in another call).
+
+As soon as 2021, an OpenAI team showed with [WebGPT](https://arxiv.org/abs/2112.09332) that it was possible to greatly improve the ability of LLMs to use tools. They modified the supervised fine-tuning by asking the LLM to reproduce human-made demonstrations of the desired behavior (a.k.a searching the web before answering) and the post-training processes by integrating a custom RLHF reward-model[^4], rewarding the LLM when it used the right tools for a given query.
+
+
+<Alert type="info">
+**Quick emphasis** because it's important. The tools name, parameters and description are all part of the prompt (or input) of the LLM. 
+</Alert>
+
+Since then, the concept of "tools" (or "function calling") has become one of few stable foundations of the LLM ecosystem. **It became a key part of the post-training process too**. An early form of Reinforcement Learning (RL) consisted in rewarding the LLM when it used the right tool (or combination of tools) for a given query. Nowadays, all major labs (OpenAI, Anthropic, ...) dedicate a significant part of their compute budget to the post-training steps improving their models' ability to use important tools (like `web_search`, `read_file` or `run_command`). At inference time, they all provide you with a way to define your own tools so their LLMs can act the way you want them to.
+
+
+**"Reasoning"** emerged the same year in a similar manner from a Google team. It was a two-step discovery. First in 2021, they found that LLMs were more likely to produce a correct answer to a complex problem if given the option to write "intermediary steps" before producing its final answer (see [paper](https://arxiv.org/abs/2112.00114)). In 2022, they coined the term "Chain-of-Thought" (CoT) prompting when they got even better results by adding "intermediary steps" in the examples in the prompt (see [paper](https://arxiv.org/abs/2201.11903)).
+
+Then, in late 2024, OpenAI found a way to leverage this strange property of early LLMs directly in their training process. To make their next generation of models smarter, they included a new step in their post-training process. The models in their **o1 series** got more reward when they produced a few intermediary "reasoning" steps before answering. To distinguish the "chain of thought" part from the final answer, they trained the model to generate a special token before and after its reasoning steps (see [paper](https://openai.com/index/learning-to-reason-with-llms/)). As these models were trained to do so, they spontaneously exhibited the behaviors and the performance described in the original CoT prompting papers, but without any special techniques required from the user.
+
+[^4]: Technically, as WebGPT precedes ChatGPT, they also introduced the idea of using a reward model mimicking human-preferences during the post-training.
+
+## Finally harnessing the power of LLMs: Agents
+
+At last, we have what we need: a conversational LLM trying to be correct and helpful with a native ability to use "tools" and "reason".
+
+The most popular AI tools (Claude Code, OpenAI Codex, ...) are relatively thin wrappers around this core idea. Their main purpose is to reduce the amount of human work required to leverage the modern LLMs, i.e. managing the LLM **context**, orchestrating LLM calls. Subagents, [skills](https://agentskills.io/home), instructions, saved prompts, even MCP servers can mostly be seen as convenience layers to help the human user to manage what goes in the LLM's input.
+
+Other kind of "harnesses" are (re)appearing[^5] since beginning of 2026. As models improve and people get better at identifying the bottlenecks in their workflows, the well-established tools are challenged by new ideas and custom workflows. Anthropic recently published a [blog post](https://www.anthropic.com/engineering/harness-design-long-running-apps) where they explore how to orchestrate a duo of agents (one generating code, the other providing feedback) interacting in a loop to achieve more autonomy. 
+
+Future articles will explore these developments in more detail. Thanks for reading this fairly dense and long article! I hope you enjoyed it 😊.
+
+
+[^5]: The "early days" were very fertile and creative times. Arguably, [Minecraft's Voyager (2023)](https://voyager.minedojo.org/) can be viewed as the ancestor of both [Code-Mode / Programmatic tool calling](https://www.anthropic.com/engineering/advanced-tool-use) and [Karpathy's `autoresearch`](https://github.com/karpathy/autoresearch). [Reflexion (2023)](https://arxiv.org/abs/2303.11366) introduced the idea of having one agent overseeing the action of another agent and providing feedback.
