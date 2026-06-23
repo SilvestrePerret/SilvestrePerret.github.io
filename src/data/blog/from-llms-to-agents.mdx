@@ -150,13 +150,13 @@ Then, in late 2024, OpenAI found a way to leverage this strange property of earl
 
 ## Finally harnessing the power of LLMs: Agents
 
-At last, we have what we need: a conversational LLM trying to be correct and helpful with a native ability to use "tools" and "reason".
+At last, we have what we need: a conversational LLM trying to be correct and helpful with a native ability to use "tools" and "reason". Making an agent from there is easy: put the LLM in a loop where given a user query, it can freely use tools to interact with its environment and reason about the problem at hand. *Et voilà*, you have a Copilot.
 
-The most popular AI tools (Claude Code, OpenAI Codex, ...) are relatively thin wrappers around this core idea. Their main purpose is to reduce the amount of human work required to leverage the modern LLMs, i.e. managing the LLM **context**, orchestrating LLM calls. Subagents, [skills](https://agentskills.io/home), instructions, saved prompts, even MCP servers can mostly be seen as convenience layers to help the human user to manage what goes in the LLM's input.
+The most popular AI coding tools (Claude Code, OpenAI Codex, ...) are relatively thin wrappers around this core idea. Their main purpose is to reduce the amount of human work required to leverage the modern LLMs, i.e. managing the LLM **context**, orchestrating LLM calls. Subagents, [skills](https://agentskills.io/home), instructions, saved prompts, even MCP servers can mostly be seen as convenience layers to help the human user to manage what goes in the LLM's input.
 
 Other kind of "harnesses" are (re)appearing[^5] since beginning of 2026. As models improve and people get better at identifying the bottlenecks in their workflows, the well-established tools are challenged by new ideas and custom workflows. Anthropic recently published a [blog post](https://www.anthropic.com/engineering/harness-design-long-running-apps) where they explore how to orchestrate a duo of agents (one generating code, the other providing feedback) interacting in a loop to achieve more autonomy. 
 
 Future articles will explore these developments in more detail. Thanks for reading this fairly dense and long article! I hope you enjoyed it 😊.
 
 
-[^5]: The "early days" were very fertile and creative times. Arguably, [Minecraft's Voyager (2023)](https://voyager.minedojo.org/) can be viewed as the ancestor of both [Code-Mode / Programmatic tool calling](https://www.anthropic.com/engineering/advanced-tool-use) and [Karpathy's `autoresearch`](https://github.com/karpathy/autoresearch). [Reflexion (2023)](https://arxiv.org/abs/2303.11366) introduced the idea of having one agent overseeing the action of another agent and providing feedback.
+[^5]: The "early days" were very fertile and creative times. Arguably, [Minecraft's Voyager (2023)](https://voyager.minedojo.org/) can be viewed as the ancestor of both [Code-Mode / Programmatic tool calling](https://www.anthropic.com/engineering/advanced-tool-use) and [Karpathy's `autoresearch`](https://github.com/karpathy/autoresearch). [Reflexion (2023)](https://arxiv.org/abs/2303.11366) introduced the idea of having one agent overseeing the action of another agent and providing feedback well before Anthropic's "Harness design for long-running application development".
