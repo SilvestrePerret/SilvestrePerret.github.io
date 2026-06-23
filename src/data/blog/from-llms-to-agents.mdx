@@ -71,7 +71,7 @@ To mimic the continuity you expect from a conversation, the next time you invoke
 
 At their very core, they are **"stateless"**. Nothing survives a text generation.
 
-Second, the total amount of text fed into the model during the "conversation" **increases quadratically** with the number of "turns". 
+Second, the total amount of text fed into the model during the "conversation" **increases quadratically** with the number of "turns". If you pay per usage, it means that having a 10-turn conversation costs 100 times more than a single-turn conversation.
 
 If we normalize the size of each turn input and output to 1, we get the following sequence:
 | Turn | Input Size | Output Size | Total Turn | Total Conversation |
@@ -94,23 +94,25 @@ First, we'll keep the initial training step, now called **pre-training**. The fo
 
 Then, we enter the next phase called **supervised fine-tuning (SFT)**. This is a key step to reshape the LLM "behavior". The idea is simple. You gather a few thousand high-quality conversations mimicking the behavior you want the model to exhibit and you train the pre-trained model on them. While the pretraining dataset is very chaotic, the SFT dataset is very coherent and help changing the LLMs weights to make it less a generalistic next-word predictor and more a specialized conversational model.
 
-Now, you have a LLM that tries to fake being helpful. "fake" because fundamentally the LLM still tries to predict the next word and when it gets it right, it gets its reward, else it doesn't. We need to switch our "reward mechanism" to a higher level one, one that would reward the LLM when it produces a correct answer or at least an answer appreciated by humans. We are entering the **post-training** phase.
+Now, you have a LLM that tries to fake being helpful. "fake" because fundamentally the LLM still tries to predict the next word and when it gets it right, it gets its reward, else it doesn't[^1]. We need to switch our "reward mechanism" to a higher level one, one that would reward the LLM when it produces a correct answer or at least an answer appreciated by humans. We are entering the **post-training** phase.
 
-The first post-training approach "discovered" in 2022[^1] at OpenAI is called **Reinforcement Learning from Human Feedback (RLHF)** ([paper](https://arxiv.org/abs/2203.02155)). The idea is to ask a question to the LLM and make it generate 2 answers, then you ask a human to choose which one they prefer, finally you use that feedback to modify the LLM's weights so it is more likely to produce the preferred answer in the future. 
+The first post-training approach "discovered" in 2022[^2] at OpenAI is called **Reinforcement Learning from Human Feedback (RLHF)** ([paper](https://arxiv.org/abs/2203.02155)). The idea is to ask a question to the LLM and make it generate 2 answers, then you ask a human to choose which one they prefer, finally you use that feedback to modify the LLM's weights so it is more likely to produce the preferred answer in the future.
 
 But LLMs are very slow learners, they need billions of such pair of answers and preferences. And human time is expensive. So instead of asking actual humans to give billions of feedback, you gather a few million human feedbacks and train a secondary Neural Network to predict which answer a human would prefer. If your **Reward Model** is good enough, you don't need an actual human in your training loop anymore. So you can scale to billions of feedbacks.
 
 To get a post-training approach that actually rewards correct answers, we had to wait for almost 3 years (an eternity in AI time). In December 2024, the Allen Institute for AI and DeepSeek published a new approach called **Reinforcement Learning from Verifiable Rewards (RLVR)** ([paper 1](https://arxiv.org/abs/2411.15124), [paper 2](https://arxiv.org/abs/2501.12948)). The idea is even simpler, you ask questions to the LLM whose answer can be easily and deterministically verified. Think of math problems, logic puzzles, coding problems, etc. If the answer is correct, you give a reward, else you don't. Again, you'll need to do that many many times. Quoting [Karpathy](https://karpathy.bearblog.dev/year-in-review-2025/): 
 > [During RLVR], the LLMs spontaneously develop strategies that look like 'reasoning' to humans - they learn to break down problem solving into intermediate calculations and they learn a number of problem solving strategies.
 
-There you have it, the main ingredients to build an "helpful" LLM: **pre-training, SFT, RLHF and RLVR**[^2]. Now it's up to you to mix them in the best way you can think of[^3]. 
+There you have it, the main ingredients to build an "helpful" LLM: **pre-training, SFT, RLHF and RLVR**[^3]. Now it's up to you to mix them in the best way you can think of[^4].
 
-[^1]: RLHF was actually discovered way earlier in 2017 by a joint team from OpenAI and DeepMind. They applied the idea of learning a reward model from human feedback to improve the performance of a reinforcement learning agent playing Atari games ([paper](https://arxiv.org/abs/1706.03741)). 2022 was still the first time this idea was applied to LLMs.
+[^1]: During the training of a Machine Learning model,we use a sophisticated function called the "loss function", it takes 2 inputs: the model's prediction and the "ground truth" (the correct answer). It outputs a number (the loss) that represents how wrong the model is. The reward is the inverse of the loss. The algorithm training the model (usually some variant of gradient descent) then uses this number to update the model's weights to be less wrong in the future.
 
-[^2]: Training LLMs is a complex, secretive and quickly evolving process. If the steps presented above are well documented, their exact combination is a well-kept secret in all the leading U.S. based labs (OpenAI, Anthropic, Google, etc.). They never share the key details of their training process (even when they publish papers), their Chinese competitors (DeepSeek, Alibaba, etc.) are more open and share a lot more.
+[^2]: RLHF was actually discovered way earlier in 2017 by a joint team from OpenAI and DeepMind. They applied the idea of learning a reward model from human feedback to improve the performance of a reinforcement learning agent playing Atari games ([paper](https://arxiv.org/abs/1706.03741)). 2022 was still the first time this idea was applied to LLMs.
+
+[^3]: Training LLMs is a complex, secretive and quickly evolving process. If the steps presented above are well documented, their exact combination is a well-kept secret in all the leading U.S. based labs (OpenAI, Anthropic, Google, etc.). They never share the key details of their training process (even when they publish papers), their Chinese competitors (DeepSeek, Alibaba, etc.) are more open and share a lot more.
 
 
-[^3]: How you combine these steps would deserve a whole other blog post as you can get fairly creative with it. For example, in the [DeepSeek R1 paper](https://arxiv.org/abs/2501.12948), the authors used a "self-improvement" loop where they ask the LLM to generate new RLVR questions and answers to autonomously expand its post-training dataset, then they trained on the newly generated dataset and repeat the process as long as they are able to measure improvements.
+[^4]: How you combine these steps would deserve a whole other blog post as you can get fairly creative with it. For example, in the [DeepSeek R1 paper](https://arxiv.org/abs/2501.12948), the authors used a "self-improvement" loop where they ask the LLM to generate new RLVR questions and answers to autonomously expand its post-training dataset, then they trained on the newly generated dataset and repeat the process as long as they are able to measure improvements.
 
 <Image src={persianCatMemeAiAgentImage} alt="A persian cat room guardian meme saying 'My AI Agent, Where is it?" layout="responsive" class="lg:max-w-1/2" />
 <div class="text-center lg:max-w-1/2 mx-auto" style="margin-top:-1rem"><p><i>Almost there, hang in there!</i></p></div>
@@ -132,7 +134,7 @@ SEARCH:
 
 The LLM would predict the next word after "SEARCH:" and was likely to produce a search query. Then, you could automatically parse that query, execute it on a search engine and feed the results back to the LLM (in another call).
 
-As soon as 2021, an OpenAI team showed with [WebGPT](https://arxiv.org/abs/2112.09332) that it was possible to greatly improve the ability of LLMs to use tools. They modified the supervised fine-tuning by asking the LLM to reproduce human-made demonstrations of the desired behavior (a.k.a searching the web before answering) and the post-training processes by integrating a custom RLHF reward-model[^4], rewarding the LLM when it used the right tools for a given query.
+As soon as 2021, an OpenAI team showed with [WebGPT](https://arxiv.org/abs/2112.09332) that it was possible to greatly improve the ability of LLMs to use tools. They modified the supervised fine-tuning by asking the LLM to reproduce human-made demonstrations of the desired behavior (a.k.a searching the web before answering) and the post-training processes by integrating a custom RLHF reward-model[^5], rewarding the LLM when it used the right tools for a given query.
 
 
 <Alert type="info">
@@ -146,7 +148,7 @@ Second, **"Reasoning"** emerged the same year in a similar manner from a Google 
 
 Then, in late 2024, OpenAI found a way to leverage this strange property of early LLMs directly in their training process. To make their next generation of models smarter, they included a new step in their post-training process. The models in their **o1 series** got more reward when they produced a few intermediary "reasoning" steps before answering. To distinguish the "chain of thought" part from the final answer, they trained the model to generate a special token before and after its reasoning steps (see [paper](https://openai.com/index/learning-to-reason-with-llms/)). As these models were trained to do so, they spontaneously exhibited the behaviors and the performance described in the original CoT prompting papers, but without any special techniques required from the user.
 
-[^4]: Technically, as WebGPT precedes ChatGPT, they also introduced the idea of using a reward model mimicking human-preferences during the post-training.
+[^5]: Technically, as WebGPT precedes ChatGPT, they also introduced the idea of using a reward model mimicking human-preferences during the post-training.
 
 ## Finally harnessing the power of LLMs: Agents
 
@@ -154,9 +156,9 @@ At last, we have what we need: a conversational LLM trying to be correct and hel
 
 The most popular AI coding tools (Claude Code, OpenAI Codex, ...) are relatively thin wrappers around this core idea. Their main purpose is to reduce the amount of human work required to leverage the modern LLMs, i.e. managing the LLM **context**, orchestrating LLM calls. Subagents, [skills](https://agentskills.io/home), instructions, saved prompts, even MCP servers can mostly be seen as convenience layers to help the human user to manage what goes in the LLM's input.
 
-Other kind of "harnesses" are (re)appearing[^5] since beginning of 2026. As models improve and people get better at identifying the bottlenecks in their workflows, the well-established tools are challenged by new ideas and custom workflows. Anthropic recently published a [blog post](https://www.anthropic.com/engineering/harness-design-long-running-apps) where they explore how to orchestrate a duo of agents (one generating code, the other providing feedback) interacting in a loop to achieve more autonomy. 
+Other kind of "harnesses" are (re)appearing[^6] since beginning of 2026. As models improve and people get better at identifying the bottlenecks in their workflows, the well-established tools are challenged by new ideas and custom workflows. Anthropic recently published a [blog post](https://www.anthropic.com/engineering/harness-design-long-running-apps) where they explore how to orchestrate a duo of agents (one generating code, the other providing feedback) interacting in a loop to achieve more autonomy.
 
 Future articles will explore these developments in more detail. Thanks for reading this fairly dense and long article! I hope you enjoyed it 😊.
 
 
-[^5]: The "early days" were very fertile and creative times. Arguably, [Minecraft's Voyager (2023)](https://voyager.minedojo.org/) can be viewed as the ancestor of both [Code-Mode / Programmatic tool calling](https://www.anthropic.com/engineering/advanced-tool-use) and [Karpathy's `autoresearch`](https://github.com/karpathy/autoresearch). [Reflexion (2023)](https://arxiv.org/abs/2303.11366) introduced the idea of having one agent overseeing the action of another agent and providing feedback well before Anthropic's "Harness design for long-running application development".
+[^6]: The "early days" were very fertile and creative times. Arguably, [Minecraft's Voyager (2023)](https://voyager.minedojo.org/) can be viewed as the ancestor of both [Code-Mode / Programmatic tool calling](https://www.anthropic.com/engineering/advanced-tool-use) and [Karpathy's `autoresearch`](https://github.com/karpathy/autoresearch). [Reflexion (2023)](https://arxiv.org/abs/2303.11366) introduced the idea of having one agent overseeing the action of another agent and providing feedback well before Anthropic's "Harness design for long-running application development".
