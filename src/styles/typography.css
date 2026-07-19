@@ -1,7 +1,6 @@
 @plugin '@tailwindcss/typography';
 
 @layer base {
-
   /* ===== Override default Tailwind Typography styles ===== */
   .app-prose {
     @apply prose;
@@ -53,7 +52,6 @@
     }
 
     table {
-
       th,
       td {
         @apply border border-border p-2;
@@ -94,7 +92,7 @@
 
     /* ===== GFM Footnotes ===== */
     .footnotes {
-      @apply mt-8 border-t border-border pt-4 text-sm opacity-75 italic;
+      @apply mt-8 border-t border-border pt-4 text-sm italic opacity-75;
 
       h2 {
         @apply sr-only;
@@ -109,7 +107,7 @@
       }
 
       a[data-footnote-backref] {
-        @apply no-underline text-accent;
+        @apply text-accent no-underline;
       }
     }
 

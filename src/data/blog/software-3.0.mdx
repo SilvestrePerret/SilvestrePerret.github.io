@@ -1,7 +1,7 @@
 ---
 author: Silvestre Perret
-title: 'Which flavor of software are LLMs exactly?'
-description: 'Which flavor of software are LLMs exactly?'
+title: "Which flavor of software are LLMs exactly?"
+description: "Which flavor of software are LLMs exactly?"
 slug: software-3-0
 pubDatetime: 2026-05-15T12:00:00Z
 featured: false
@@ -11,7 +11,8 @@ tags:
   - machine-learning
   - artificial-intelligence
 ---
-import { Image } from 'astro:assets';
+
+import { Image } from "astro:assets";
 import Alert from "../../components/Alert.astro";
 import squirrelImage from "../../assets/images/squirrel.jpg";
 
@@ -29,9 +30,10 @@ Artificial Intelligence and Neural Networks have been around pretty much since t
 
 But during that time, Neural Networks still respected most of the numerous "rules" of Machine Learning that practitioners either stole from statisticians ([them again!](/posts/databases-are-magic-until-they-are-not)) or painfully learned through experimentation. First, the Machine Learning models were trained **specifically** for the tasks they would be used for. If you wanted a Neural Network to detect squirrels eating your precious flowers, you needed to train[^3] a Neural Network to detect squirrels and a dataset to do so. Second, like other kinds of Machine Learning models, you had to **limit the complexity of the model** to match the amount of available training data. Indeed, Neural Networks are very good at memorizing data, and if you give them too much power (too many weights) for the amount of data they are trained on, they will just memorize the training data and not learn to generalize to new data. For our example, not generalizing would mean having a model only able to detect squirrels with exactly the same background, lighting and flowers as in the training data. Not super useful ... Finding the right balance between model complexity and training data size was still important.
 
-Until then, everything was rosy. The Neural Networks, while powerful, still behaved like the rest of the Machine Learning models. While there was a lot to learn and to adapt, ML practitioners (at least me) still felt more or less at home. 
+Until then, everything was rosy. The Neural Networks, while powerful, still behaved like the rest of the Machine Learning models. While there was a lot to learn and to adapt, ML practitioners (at least me) still felt more or less at home.
 
 [^2]: According to [Wikipedia](https://en.wikipedia.org/wiki/Artificial_intelligence#History), the first "artificial neurons" were designed in 1943, before computers were even a thing.
+
 [^3]: Or **fine-tune** a Neural Network to detect squirrels, **fine-tuning** here means taking an existing Neural Network trained to do a similar (often harder) task, like recognize up to [21,841 different kind of animal and objects](https://www.image-net.org/), and then re-tweaking its already-learned weights on your specific squirrel dataset. In order not to lose the initial performance of the trained model, the "re-tweaking" procedure is slightly different than a full training procedure but requires way less data and compute.
 
 ## 2. LLMs did not kindly knock at the door
@@ -47,17 +49,17 @@ The year after, in 2019, the OpenAI team wanted to see if they could also get be
 Beyond the raw parameter count, GPT-3 marked the first time people experienced "emergent capabilities". The model became so good at predicting the next word that it also become "decent" at other tasks it wasn't trained for: translation, question-answering and even more disturbingly, following instructions and following examples[^5]. In 2026, it seems pretty normal but being able to write a piece of text describing the task you would like the model to accomplish with a few examples and having a model that was trained to predict the next word in a sentence be able to do it was mind-blowing at the time (that was Sci-fi for me). In the "modern" sense of this word, GPT-3 was the first Large Language Model (LLM).
 
 [^4]: If you haven't yet, consider watching the following videos about [Transformers](https://www.youtube.com/watch?v=wjZofJX0v4M) and [the Attention Mechanism](https://www.youtube.com/watch?v=eMlx5fFNoYc) from 3Blue1Brown. Highest quality content on the subject I am aware of.
+
 [^5]: Describing LLMs as "next-word predictors" is a massive oversimplification. Since the GPT-3 paper, the training pipeline of LLMs has evolved. While there is still a "next-word prediction" training part (called "pre-training"), most of the resources dedicated to training are now spent on later steps (call "post-training") that involve Reinforcement Learning on Human Feedback (RLHF) and Reinforcement Learning with Verifiable Reward (RLVR). These techniques are not as well documented for now and definitely deserve there own blog post 😉.
 
-
 <Alert type="info">
-**What did LLMs mean for my job?** 
+**What did LLMs mean for my job?**
 
-Having the technical infrastructure to allow for multi GPU training was quite rare in 2017. So even the initial "small" Transformer with its 65M parameters and 12 hours to train on a 8 GPUs cluster would have been out of reach for most teams and individuals. 
+Having the technical infrastructure to allow for multi GPU training was quite rare in 2017. So even the initial "small" Transformer with its 65M parameters and 12 hours to train on a 8 GPUs cluster would have been out of reach for most teams and individuals.
 
 I agree that 12 hours doesn't sound that bad and you could argue that on 1 GPU it would have taken 4 days, not exactly "out of reach". But something key to understand is that you don't train it once, you train it dozens of times. Mainly for two reasons, first, training Neural Networks is fundamentally a non-deterministic convergence process started with a "random" initialization... Sometimes it converges to a good solution, sometimes it doesn't. You need to train it multiple times to be sure that the results you are seeing are not just (bad) luck.
 
-Second, there are a lot of small little things you can change when training Neural Networks, the "random" initialization, the convergence mechanism and so on. We call these hyperparameters. You can't predict which sets of hyperparameters will work best for a given Neural Network, so you need to "try them all" 🙃. Multiple times each ideally. 
+Second, there are a lot of small little things you can change when training Neural Networks, the "random" initialization, the convergence mechanism and so on. We call these hyperparameters. You can't predict which sets of hyperparameters will work best for a given Neural Network, so you need to "try them all" 🙃. Multiple times each ideally.
 
 There are technical solutions to speed up this process, like using a smaller subset of the data to quickly test a set of hyperparameters before training on the full dataset or interrupting the training process early, but it still requires a lot more compute and time than "one training".
 
@@ -66,6 +68,7 @@ There are technical solutions to speed up this process, like using a smaller sub
 But LLMs had and still have such a great potential that **many people whose job involved training custom ML models switched to simply "exploiting" already trained LLMs**. "Prompt engineering" and "Context engineering" replaced "hyperparameter optimization", "data augmentation" and "feature engineering". Some skills were transferable but not all.
 
 **If your job is changing because of AI, trust me I feel you.**
+
 </Alert>
 
 ## 3. Software 3.0: Wait, is English code now?
@@ -86,5 +89,17 @@ The implications are many, we are still figuring them out. Software engineers an
 
 We are all living through weird, unstable and sometimes surreal times. There is no way to put the "Genius" back in its bottle. Let try our best to understand what it is, how it works and how to use it, so we don't end up being used by it.
 
-<Image src={squirrelImage} alt="A typical squirrel trying to eat my precious flowers" layout="responsive" class="lg:max-w-1/2" />
-<div class="text-center lg:max-w-1/2 mx-auto" style="margin-top:-1rem"><p><i>A typical squirrel trying to eat my precious flowers, courtesy of <a href="https://unsplash.com/@sagredophotography">Richard Sagredo</a></i></p></div>
+<Image
+  src={squirrelImage}
+  alt="A typical squirrel trying to eat my precious flowers"
+  layout="responsive"
+  class="lg:max-w-1/2"
+/>
+<div class="mx-auto text-center lg:max-w-1/2" style="margin-top:-1rem">
+  <p>
+    <i>
+      A typical squirrel trying to eat my precious flowers, courtesy of{" "}
+      <a href="https://unsplash.com/@sagredophotography">Richard Sagredo</a>
+    </i>
+  </p>
+</div>

@@ -1,4 +1,3 @@
-
 # Silvestre's Personal Website
 
 This is the source code for my personal website, [Silvestre Perret](https://silvestreperret.com). Here, I share my projects, blog posts, and professional information.

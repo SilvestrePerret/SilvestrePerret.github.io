@@ -1,7 +1,7 @@
 ---
 author: Silvestre Perret
-title: 'The Power Law, The Grind and The Ugly'
-description: 'Power Laws Break Our Intuition'
+title: "The Power Law, The Grind and The Ugly"
+description: "Power Laws Break Our Intuition"
 slug: power-laws
 pubDatetime: 2025-12-27T15:00:00Z
 featured: false
@@ -15,7 +15,8 @@ import CoinFlipGameB from "../../components/CoinFlipGameB.jsx";
 
 _**Disclaimers**: This post is heavily inspired by the excellent [Veritasium](https://www.veritasium.com/) video about Power Laws. I highly recommend watching it [here](https://www.youtube.com/watch?v=HBluLfX2F_k) (and their other videos too)._
 
-## How good is your intuition about risk and reward? 
+## How good is your intuition about risk and reward?
+
 How do you reason about uncertainty? About rare events?
 
 Let's play 2 games and see which one you prefer.
@@ -34,7 +35,7 @@ How do you feel about it? Which game would you prefer to play? Which one would y
 
 The first game has a **normal distribution** of rewards. Most of the time you get around the average reward, and the probability of getting a much higher reward drops off quickly.
 
-The rewards from the second game follow a **power law distribution**. Most of the time you get a small reward, but there is a slim chance of getting a huge reward. The probability of getting a reward decreases as the reward increases. But it does so in a way that still increases the overall **expected value** (EV) of the game. If you consider all the possible reward, even the most unlikely, the expected value of the second game (with a fair coin) is infinite! 
+The rewards from the second game follow a **power law distribution**. Most of the time you get a small reward, but there is a slim chance of getting a huge reward. The probability of getting a reward decreases as the reward increases. But it does so in a way that still increases the overall **expected value** (EV) of the game. If you consider all the possible reward, even the most unlikely, the expected value of the second game (with a fair coin) is infinite!
 
 Think about it for a few seconds... The EV is not just BIG, it is **infinite**! It means that the rationale thing to do is to keep playing the game forever, even if you have to pay 10$ to play each time! Even if you have to pay 100$... even if you have to pay 1M$! The fee doesn't actually matter... (as long as you have infinite money to keep playing).
 
@@ -42,7 +43,7 @@ Think about it for a few seconds... The EV is not just BIG, it is **infinite**! 
 
 ## What's the point?
 
-Many real-world phenomena follow distributions similar to power laws: wealth distribution, earthquake magnitudes, forest fire sizes, and more. 
+Many real-world phenomena follow distributions similar to power laws: wealth distribution, earthquake magnitudes, forest fire sizes, and more.
 
 Let's explore a terrific simulation Veritasium made to illustrate this: Forest fires model (Drossel–Schwabl)
 ![GIF of forest fire simulation](../../assets/images/forest-fire-simulation.gif)
@@ -51,20 +52,22 @@ In this simulation, trees grow and occasionally catch fire. Most fires are small
 Play with it [here](https://www.veritasium.com/simulation5). It's more fun than what it looks like.
 
 There are a few other notable examples of power laws in real life:
+
 - [Sand piles collapsing (simulation)](https://www.veritasium.com/simulation3): Sand grains are added one by one to a pile until it reaches a critical state, leading to avalanches of various sizes. The sizes of these avalanches follow a power law distribution.
 - [Wealth distribution (resource from the University of Florida)](https://web.mae.ufl.edu/uhk/PARETO.pdf): "Pareto proposed via statistical analysis
-that 80% of a countries wealth is held by about 20% of the people".
+  that 80% of a countries wealth is held by about 20% of the people".
 - [Stock market returns](https://blogs.cornell.edu/info2040/2017/11/27/applying-power-laws-to-stock-markets/)
 - [War casualties](https://bpb-us-e1.wpmucdn.com/sites.dartmouth.edu/dist/0/433/files/2014/07/friedman_-_using_power_laws_-_jcr_2014.pdf)
 - ...
 
-## But why are they appearing "everywhere"? 
+## But why are they appearing "everywhere"?
 
 Some say power laws emerge from **self-organized criticality**. Systems evolve to a **critical state** (trees grow, sand piles accumulate, ...) where minor events can lead to consequences of any sizes.
 
 This idea was very much developed by Per Bak, Chao Tang and Kurt Wiesenfield in [their 1987 paper](https://psychsafety.com/wp-content/uploads/2025/04/SOC.pdf)
 
 **Once you know about "self-organized criticality", you start to see it everywhere, especially when humans are involved.**
+
 - **Many people accumulate unaddressed emotions over time and minor events can trigger massive emotional outbursts.**
 - **Companies accumulate technical and organizational complexity and minor incidents or mistakes can lead to [catastrophic failures](https://aws.amazon.com/message/101925/).**
 - **Societies accumulate tensions and minor events (a small fuel tax increase) can spark large-scale outrage ([Gilets jaunes movement](https://www.lemonde.fr/societe/article/2019/03/18/gilets-jaunes-l-usage-de-la-violence-est-toujours-un-calcul-risque_5437952_3224.html)) (If you are from the USA, consider the impact of the death of George Floyd).**

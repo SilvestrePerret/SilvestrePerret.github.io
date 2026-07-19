@@ -1,7 +1,7 @@
 ---
 author: Silvestre Perret
-title: 'Machine Learning is still growing'
-description: 'Machine Learning is still growing'
+title: "Machine Learning is still growing"
+description: "Machine Learning is still growing"
 slug: software-2-0
 pubDatetime: 2026-02-18T08:00:00Z
 featured: false
@@ -11,6 +11,7 @@ tags:
   - machine-learning
   - artificial-intelligence
 ---
+
 import Alert from "../../components/Alert.astro";
 import SegmentAnythingLoadButton from "../../components/SegmentAnythingLoadButton.astro";
 import SegmentAnythingDemo from "../../components/SegmentAnythingDemo.astro";
@@ -19,38 +20,38 @@ _**Disclaimer**: Cool interactive demo below. But first some text._
 
 <SegmentAnythingLoadButton />
 
-
 In 2017 (almost 10 years ago, ouch! aïe!), Andrej Karpathy[^1] wrote a now famous [blog post](https://karpathy.medium.com/software-2-0-a64152b37c35) about Machine Learning, titled **"Software 2.0"**. The core idea is quite straightforward: on one hand "Software 1.0" is the kind of software we are used to since the dawn of computers, it requires explicitly written rules (`if` statements, `for` loops, etc.); on the other hand, "Software 2.0" relies on neural networks to learn these rules implicitly from data. The process of writing code becomes a data-centric work: you collect data, clean it, use it to train not one but hundreds of models, evaluate them, select the best one, connect it with the rest of the project, deploy it and finally monitor it closely.
 
 It's a great and inspirational read that has aged quite well, especially if you consider the tsunami of changes we are going through since ChatGPT-3 release, so I encourage you to read it[^2] 😊. In this blog post, we'll show that **Software 2.0 has a lot going for it in 2026**, and that we could see an explosion of it in the next few years.
 
 [^1]: Andrej Karpathy: ex-Director of AI at Tesla, ex-OpenAI co-founder, also the guy who coined the term "vibe coding" one year ago ([link to wikipedia](https://en.wikipedia.org/wiki/Andrej_Karpathy))
+
 [^2]: If you prefer a video/podcast form, I can only recommend his more recent [follow up talk](https://www.youtube.com/watch?v=LCEmiRjPEtQ) which also includes some thoughts about LLMs
 
 ## 1. Data Science was pain in 2017
 
-To understand the trend and why the evolution we are seeing is significant, we need to first discuss why it was so **painful** to build Software 2.0 / Machine Learning products in 2017. 
+To understand the trend and why the evolution we are seeing is significant, we need to first discuss why it was so **painful** to build Software 2.0 / Machine Learning products in 2017.
 
 It was **expensive**, **slow** and with **no guarantee of success**. Very few people were trained in AI before 2010[^3] and most of them were either in academia, ad tech or finance. Everyone else was more or less stuck with juniors fresh out of school with little professional experience and no one to mentor them. The tooling was too young (Databricks and Dataiku were both founded in 2013, Pytorch and Huggingface were released in 2016) or not there yet (AWS SageMaker was released 2 months after Andrej's post, MLflow in 2018). Finally, we didn't have access to a lot of open pre-trained neural networks at that time and they were not as good as today's. So you often had to train from scratch, which requires even more skills and experience to avoid wasting months of work and thousands of dollars in compute.
 
 <Alert type="info">
-**What are "pretrained models"?** Pretrained models are neural networks that have already been trained on a large dataset to do a useful but generic task. For example, ResNet (which was all the rage in 2017) was trained on a dataset of 1.2 million images to classify images (ie. answer the question 'does this image contain a person? a cat? a dog?'). 
+**What are "pretrained models"?** Pretrained models are neural networks that have already been trained on a large dataset to do a useful but generic task. For example, ResNet (which was all the rage in 2017) was trained on a dataset of 1.2 million images to classify images (ie. answer the question 'does this image contain a person? a cat? a dog?').
 
 **Why are they useful?** They can be used as a starting point. Let's say you need to know if an image contains rotten fruits or fresh ones. You can leverage the knowledge already acquired by ResNet to do image classification, and retrain only a subpart of the network on a smaller dataset (a few hundreds or thousands of images) of rotten and fresh fruits. This is called **"fine tuning"** and it's much easier than training a model from scratch.
+
 </Alert>
 
-So for most companies, building software leveraging neural networks meant hiring a team of relatively young, inexperienced but expensive data scientists, hoping that they would be able to build all the necessary infrastructure and internals tools to process the available data (if any), train and evaluate models and "deploy" them somehow. You had no idea how long it would take or how much it would cost to run at the end (will you win more money than what you are spending to run the thing?). 
+So for most companies, building software leveraging neural networks meant hiring a team of relatively young, inexperienced but expensive data scientists, hoping that they would be able to build all the necessary infrastructure and internals tools to process the available data (if any), train and evaluate models and "deploy" them somehow. You had no idea how long it would take or how much it would cost to run at the end (will you win more money than what you are spending to run the thing?).
 
-What most companies did at the time was to try to cut corners and they did "prototypes", usually with a single person, a single model pipeline and without building (or even just acknowledging the need for) any kind of robust and long lasting tools & infrastructure. It was a time where **"You'll be the first data scientist of the company"** was a very common sentence in job interviews (but not great news). As you can guess, it didn't work out very well and most of these projects stalled indefinitely. 
+What most companies did at the time was to try to cut corners and they did "prototypes", usually with a single person, a single model pipeline and without building (or even just acknowledging the need for) any kind of robust and long lasting tools & infrastructure. It was a time where **"You'll be the first data scientist of the company"** was a very common sentence in job interviews (but not great news). As you can guess, it didn't work out very well and most of these projects stalled indefinitely.
 
 For the record, every step involved in the data centric process of Software 2.0 is **hard**. Many new roles emerged from that: data engineer, data analyst, data scientist, machine learning engineer, MLOps engineer, etc.
 
 [^3]: AI-related degree doubled between 2011 and 2021. Source: [CSET Leading the Charge: A Look at the Top-Producing AI Programs in U.S. Colleges and Universities](https://cset.georgetown.edu/publication/leading-the-charge-a-look-at-the-top-producing-ai-programs-in-u-s-colleges-and-universities/). And all that was before ChatGPT.
 
+## 2. The current landscape
 
-## 2. The current landscape 
-
-Over the past years, the Machine Learning ecosystem has matured tremendously. 
+Over the past years, the Machine Learning ecosystem has matured tremendously.
 
 We now have access to **a wide variety of very powerful open pre-trained models** on Huggingface. This is very similar to what open-source is for "Software 1.0": we can find a neural network for almost anything we want to do, and you can build "on top of it" to get the exact behavior we want instead of having to start from scratch.
 
@@ -62,9 +63,9 @@ But most importantly, the realm of what is possible recently changed. **It's now
 
 Removing the need for a dedicated cloud server is a game changer. Your system is simpler (one less service, no usage tracking or billing), the data stays on the user's device (no storage to handle, no privacy concerns, etc.) and last but not least, usage doesn't involve cost anymore. You don't need to pay hundreds if not thousants of dollars every month for a GPU accelerated server. **Applications that made no economic sense before are becoming viable**.
 
-It's now possible to grow a user base or become viral with a **"Software 2.0 application"** without any kind of paywall or subscription or breaking the bank. 
+It's now possible to grow a user base or become viral with a **"Software 2.0 application"** without any kind of paywall or subscription or breaking the bank.
 
-This is a huge deal. Here is a demo: 
+This is a huge deal. Here is a demo:
 
 <SegmentAnythingDemo />
 
@@ -72,8 +73,7 @@ It's a simple demo, it involves only one pre-trained model (SAM2 from Meta, circ
 
 Your pictures never left your device.
 
-You could do that for many other tasks: text extraction, image generation, real-time detection on video, forecasting, etc. 
-
+You could do that for many other tasks: text extraction, image generation, real-time detection on video, forecasting, etc.
 
 ## 3. But how?
 
@@ -83,8 +83,7 @@ The history of ONNX is cool. It was started by Facebook and Microsoft in 2017. A
 
 You are probably familiar with browsers as you are using one to read this. So I don't have to tell how ubiquitous they are. The fact that they can now run neural networks is remarquable. C#/.NET (if you don't know) is a widely used programming language, used extensively in enterprise software, but also in game development (Unity) and mobile apps (Xamarin).
 
-These trends are clearly modifying the landscape of technology and will change the expectations of users in the years to come. 
-
+These trends are clearly modifying the landscape of technology and will change the expectations of users in the years to come.
 
 ## 4. What's the catch?
 
@@ -92,7 +91,7 @@ There are a few. First, most users don't have a high-end GPUs or the latest iPho
 
 Same thing for the bandwith requirements, nobody likes to wait several seconds or minutes before accessing the feature they are looking for. Downloading your model from the internet each time I open your app is probably an anti-pattern of "Software 2.0". I think the mobile or a desktop app will have an easier time adapting to that requirement, because they can leverage their install time to download models. For websites, it's trickier.
 
-Finally, most of this has really started to take off in 2023. So it's still the early days and despite the tooling getting better, you can expect some unpleasant surprises and many "learning opportunities". The different nature and maturity of "Software 1.0"  versus "Software 2.0" means making the latter requires a lot of expertise most traditional software engineers simply don't have.
+Finally, most of this has really started to take off in 2023. So it's still the early days and despite the tooling getting better, you can expect some unpleasant surprises and many "learning opportunities". The different nature and maturity of "Software 1.0" versus "Software 2.0" means making the latter requires a lot of expertise most traditional software engineers simply don't have.
 
 But it's getting easier every year. And there is only one way to get better at it.
 
@@ -103,4 +102,5 @@ GenAI (ChatGPT, Gemini, Nano Banana, etc.) hype outshines everything else curren
 Their potential is growing and the obstacles to their adoption are shrinking. If they become easy enough to build and maintain so that a Claude Code or a GitHub Copilot can one-shot a "Software 2.0" feature in an existing app, we could see an explosion of these in the next few years.
 
 [^4]: The Big Cloud Provider (AWS, Azure, Google Cloud) all leverage good pre-trained models and offers services to do "object detection", "text translation", "document extraction". They often develop their own models and more rarely, they even open-source them, providing us with the next generation of pretrained models.
+
 [^5]: To be honest, that era already started a few years ago. Your smartphone camera is doing text extraction for example. But there is potential for much more advanced and custom applications.

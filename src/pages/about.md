@@ -13,7 +13,6 @@ Over the years, I've built complex multi-step ML pipelines, analyzed BIG and mes
 
 I can work solo but I **thrive** with emulation from motivated peers. I've done multiple freelance missions and helped startups and SMEs to get their data projects off the ground.
 
-When I'm neither coding or thinking about my next blog post, you can find me playing video games, experimenting new recipes in the kitchen or enjoying the beautiful national parks of Québec, Canada. 
+When I'm neither coding or thinking about my next blog post, you can find me playing video games, experimenting new recipes in the kitchen or enjoying the beautiful national parks of Québec, Canada.
 
 I'm always happy to connect with like-minded people, so feel free to [send me an email](mailto:silvestre.perret@gmail.com) or [reach out on LinkedIn](https://www.linkedin.com/in/silvestreperret/).
-

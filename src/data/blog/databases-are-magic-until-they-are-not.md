@@ -1,7 +1,7 @@
 ---
 author: Silvestre Perret
-title: 'Databases are magic ... until ...'
-description: 'Databases are magic until they are not. OLTP vs OLAP explained.'
+title: "Databases are magic ... until ..."
+description: "Databases are magic until they are not. OLTP vs OLAP explained."
 slug: databases-are-magic-until-they-are-not
 pubDatetime: 2026-01-21T09:00:00Z
 featured: false
@@ -13,12 +13,12 @@ tags:
 
 _**Disclaimers**: This post contains several simplifications to help explain the core database concepts. Specifically, it doesn't cover the distributed systems required to handle big data. **Only read footnotes if you want to dive deeper**🤿._
 
-
 You have data. The best kind of data, the kind that fits nicely into tables: structured data. Your precious users gave it to you so you can provide them value. What should you do with it? How should you store it?
 
 ## The Great Librarian of Alexandria
 
 ![a pile of scrolls](../../assets/images/scrolls.jpg)
+
 <div class="text-center width-full" style="margin-top:-1rem"><p><i>A pile of scrolls, courtesy of Nano Banana</i></p></div>
 
 Third century BC, you are chosen to be the first Chief Librarian of the Great Library of Alexandria. You have scrolls upon scrolls of knowledge, and your task is to organize them so that visitors can find the information they need quickly.
@@ -69,7 +69,6 @@ Finally, data warehouses can make the assumption that a query will require proce
 
 [^3]: Data Warehouses systems generally also do have an equivalent of databases `pages`. Instead of storing records on a page, they store columns values one after the other. This is very handy if you only need a subset of the values of a column. See this cool [article](https://sia.hackernoon.com/all-about-parquet-part-02-parquets-columnar-storage-model#h-how-parquet-organizes-data) for more details.
 
-
 ![Library](../../assets/images/library.jpg)
 
 <div class="text-center width-full" style="margin-top:-1rem"><p><i>Photo of the Rijksmuseum, Amsterdam by Will van Wingerden</i></p></div>
@@ -82,4 +81,4 @@ Then you can choose a database, a data warehouse or use a more hybrid set up (me
 
 With great intel, great engineering is <span class="line-through">easy</span> easier! 😊
 
-*The End*
+_The End_

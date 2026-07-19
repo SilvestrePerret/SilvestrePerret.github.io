@@ -362,7 +362,9 @@ export default function CostBreakdownChart({
           <h4 className="font-semibold">Cost per call</h4>
           <p className="text-sm text-foreground/70">
             Each stacked bar is one LLM call. Its colors show what that call
-            spent on cached input, cache writes, uncached input, and output. The first bar contains the system prompt (which is usually rather large).
+            spent on cached input, cache writes, uncached input, and output. The
+            first bar contains the system prompt (which is usually rather
+            large).
           </p>
         </div>
         <svg

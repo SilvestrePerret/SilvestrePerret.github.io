@@ -26,7 +26,11 @@ export default defineConfig({
     react(),
   ],
   markdown: {
-    remarkPlugins: [remarkGfm, remarkToc, [remarkCollapse, { test: "Table of contents" }]],
+    remarkPlugins: [
+      remarkGfm,
+      remarkToc,
+      [remarkCollapse, { test: "Table of contents" }],
+    ],
     shikiConfig: {
       // For more themes, visit https://shiki.style/themes
       themes: { light: "min-light", dark: "night-owl" },

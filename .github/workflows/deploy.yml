@@ -4,7 +4,7 @@ on:
   # Trigger the workflow every time you push to the `main` branch
   # Using a different branch name? Replace `main` with your branch’s name
   push:
-    branches: [ main ]
+    branches: [main]
   # Allows you to run this workflow manually from the Actions tab on GitHub.
   workflow_dispatch:
 
@@ -27,8 +27,6 @@ jobs:
           # node-version: 24 # The specific version of Node that should be used to build your site. Defaults to 22. (optional)
           package-manager: npm@latest
           build-cmd: npm run build # The command to run to build your site. Runs the package build script/task by default. (optional)
-        # env:
-          # PUBLIC_POKEAPI: 'https://pokeapi.co/api/v2' # Use single quotation marks for the variable value. (optional)
 
   deploy:
     needs: build
