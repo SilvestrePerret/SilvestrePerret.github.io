@@ -6,13 +6,6 @@ export interface ModelConfig {
   outputPerM: number;
 }
 
-export type ToolType = "read_file" | "edit_file" | "run_command";
-
-export interface ToolProfile {
-  requestTokens: number;
-  resultTokens: number;
-}
-
 export interface ReasoningProfile {
   callShare: number;
   tokensPerReasoningCall: number;
@@ -21,8 +14,8 @@ export interface ReasoningProfile {
 export interface WorkflowShape {
   userTurns: number;
   toolCallsPerTurn: number;
-  toolMix: Record<ToolType, number>;
-  tools: Record<ToolType, ToolProfile>;
+  /** Average tokens added to the prompt context by each tool result. */
+  toolContextTokens: number;
   systemPromptTokens: number;
   userMessageTokens: number;
   finalAnswerTokens: number;
@@ -107,9 +100,10 @@ export const OPERATION_META: Record<
   },
 };
 
-export const TOOL_TYPES: ToolType[] = ["read_file", "edit_file", "run_command"];
-
 export const CACHE_MINIMUM_TOKENS = 1_024;
+
+/** Fixed model-generated token cost for a tool request (weighted empirical average). */
+const TOOL_REQUEST_TOKENS = 128;
 
 export const MODEL_PRESETS: Record<string, ModelConfig> = {
   "Claude Fable 5": {
@@ -119,13 +113,6 @@ export const MODEL_PRESETS: Record<string, ModelConfig> = {
     cachedInputPerM: 1,
     cacheWritePerM: 12.5,
   },
-  "Claude Opus 4.8": {
-    modelId: "claude-opus-4.8",
-    uncachedInputPerM: 5,
-    outputPerM: 25,
-    cachedInputPerM: 0.5,
-    cacheWritePerM: 6.25,
-  },
   "GPT-5.6 Sol": {
     modelId: "gpt-5.6-sol",
     uncachedInputPerM: 5,
@@ -133,21 +120,31 @@ export const MODEL_PRESETS: Record<string, ModelConfig> = {
     cachedInputPerM: 0.5,
     cacheWritePerM: 6.25,
   },
+  "Claude Opus 4.8": {
+    modelId: "claude-opus-4.8",
+    uncachedInputPerM: 5,
+    outputPerM: 25,
+    cachedInputPerM: 0.5,
+    cacheWritePerM: 6.25,
+  },
+  "GPT-5.6 Terra": {
+    modelId: "gpt-5.6-terra",
+    uncachedInputPerM: 2.5,
+    outputPerM: 15,
+    cachedInputPerM: 0.25,
+    cacheWritePerM: 3.125,
+  },
 };
 
 export const DEFAULT_WORKFLOW: WorkflowShape = {
   userTurns: 3,
   toolCallsPerTurn: 12,
+  // 0.5*1500 + 0.3*100 + 0.2*500 = 880 (weighted average of old per-type result tokens)
+  toolContextTokens: 1_000,
   systemPromptTokens: 10_000,
   userMessageTokens: 300,
   finalAnswerTokens: 400,
   reasoning: { callShare: 0.5, tokensPerReasoningCall: 250 },
-  tools: {
-    read_file: { requestTokens: 120, resultTokens: 1_500 },
-    edit_file: { requestTokens: 160, resultTokens: 100 },
-    run_command: { requestTokens: 100, resultTokens: 500 },
-  },
-  toolMix: { read_file: 0.5, edit_file: 0.3, run_command: 0.2 },
 };
 
 const emptyOperationRecord = (): Record<Operation, number> => ({
@@ -168,26 +165,6 @@ const priceForOperation = (
     cacheWrite: model.cacheWritePerM,
   };
   return prices[operation];
-};
-
-const createToolPicker = (mix: Record<ToolType, number>) => {
-  const counts: Record<ToolType, number> = {
-    read_file: 0,
-    edit_file: 0,
-    run_command: 0,
-  };
-  let totalPicks = 0;
-
-  return (): ToolType => {
-    totalPicks += 1;
-    const selected = TOOL_TYPES.reduce((best, toolType) => {
-      const score = mix[toolType] * totalPicks - counts[toolType];
-      const bestScore = mix[best] * totalPicks - counts[best];
-      return score > bestScore ? toolType : best;
-    });
-    counts[selected] += 1;
-    return selected;
-  };
 };
 
 const createReasoningPicker = (profile: ReasoningProfile) => {
@@ -215,34 +192,29 @@ function generateConversation(shape: WorkflowShape): ConversationCall[] {
   const calls: ConversationCall[] = [];
   let previousPrefixTokens = 0;
   let pendingTokens = shape.systemPromptTokens;
-  const pickTool = createToolPicker(shape.toolMix);
   const includesReasoning = createReasoningPicker(shape.reasoning);
 
   for (let turn = 1; turn <= shape.userTurns; turn += 1) {
     pendingTokens += shape.userMessageTokens;
 
     for (let step = 0; step < shape.toolCallsPerTurn; step += 1) {
-      const toolType = pickTool();
       const reasoning = includesReasoning()
         ? shape.reasoning.tokensPerReasoningCall
         : 0;
       const outputBreakdown = {
         reasoning,
-        toolRequest: shape.tools[toolType].requestTokens,
+        toolRequest: TOOL_REQUEST_TOKENS,
         finalAnswer: 0,
       };
       calls.push({
         turn,
-        label: `Tool: ${toolType}`,
+        label: `Turn ${turn}: tool call`,
         previousPrefixTokens,
         newSuffixTokens: pendingTokens,
         outputBreakdown,
       });
       previousPrefixTokens += pendingTokens;
-      pendingTokens =
-        reasoning +
-        shape.tools[toolType].requestTokens +
-        shape.tools[toolType].resultTokens;
+      pendingTokens = reasoning + TOOL_REQUEST_TOKENS + shape.toolContextTokens;
     }
 
     const reasoning = includesReasoning()
@@ -266,7 +238,6 @@ function generateConversation(shape: WorkflowShape): ConversationCall[] {
 }
 
 const classifyTokens = (
-  model: ModelConfig,
   call: ConversationCall,
   options: SimulationOptions
 ): Record<Operation, number> => {
@@ -308,7 +279,7 @@ export function simulate(
   options: SimulationOptions
 ): SimulationResult {
   const calls = generateConversation(shape).map((conversationCall, index) => {
-    const tokens = classifyTokens(model, conversationCall, options);
+    const tokens = classifyTokens(conversationCall, options);
     const cost = emptyOperationRecord();
     for (const operation of OPERATIONS) {
       cost[operation] =

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, useEffect } from "react";
 
 import {
   OPERATIONS,
@@ -209,6 +209,8 @@ export default function CostBreakdownChart({
 }: CostBreakdownChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [hoveredChart, setHoveredChart] = useState<ChartName>("calls");
+  const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
+  const [pinnedChart, setPinnedChart] = useState<ChartName>("calls");
   const [tooltipPosition, setTooltipPosition] = useState({ left: 0, top: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -220,6 +222,9 @@ export default function CostBreakdownChart({
     calls: [],
     cumulative: [],
   });
+
+  const activeIndex = pinnedIndex !== null ? pinnedIndex : hoveredIndex;
+  const activeChart = pinnedIndex !== null ? pinnedChart : hoveredChart;
   const maxCallCost = Math.max(
     ...result.calls.map(call => call.totalCost),
     0.000001
@@ -283,14 +288,14 @@ export default function CostBreakdownChart({
       .join(" ");
     return `${upper} ${lower}`;
   };
-  const hoveredCall = hoveredIndex === null ? null : result.calls[hoveredIndex];
+  const hoveredCall = activeIndex === null ? null : result.calls[activeIndex];
 
   useLayoutEffect(() => {
-    if (hoveredIndex === null) return;
+    if (activeIndex === null) return;
     const container = containerRef.current;
     const tooltip = tooltipRef.current;
-    const target = targetRefs.current[hoveredChart][hoveredIndex];
-    const chart = chartRefs.current[hoveredChart];
+    const target = targetRefs.current[activeChart][activeIndex];
+    const chart = chartRefs.current[activeChart];
     if (!container || !tooltip || !target || !chart) return;
 
     const placeTooltip = () => {
@@ -341,12 +346,53 @@ export default function CostBreakdownChart({
     return () => {
       window.removeEventListener("resize", placeTooltip);
     };
-  }, [hoveredChart, hoveredIndex, result]);
+  }, [activeChart, activeIndex, result]);
+
+  useEffect(() => {
+    const handlePointerDown = (e: PointerEvent) => {
+      if (
+        pinnedIndex !== null &&
+        !containerRef.current?.contains(e.target as Node)
+      ) {
+        setPinnedIndex(null);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [pinnedIndex]);
+
+  useEffect(() => {
+    if (pinnedIndex === null) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setPinnedIndex(null);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [pinnedIndex]);
 
   const targetProps = (chart: ChartName, index: number) => ({
-    onMouseEnter: () => {
-      setHoveredChart(chart);
-      setHoveredIndex(index);
+    onPointerEnter: (e: React.PointerEvent) => {
+      if (e.pointerType !== "touch") {
+        setHoveredChart(chart);
+        setHoveredIndex(index);
+      }
+    },
+    onPointerDown: (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") {
+        const target = e.currentTarget as SVGRectElement;
+        if (target.hasPointerCapture(e.pointerId)) {
+          target.releasePointerCapture(e.pointerId);
+        }
+        const isSame = pinnedIndex === index && pinnedChart === chart;
+        if (isSame) {
+          setPinnedIndex(null);
+        } else {
+          setPinnedChart(chart);
+          setPinnedIndex(index);
+        }
+      }
     },
     onFocus: () => {
       setHoveredChart(chart);
@@ -376,7 +422,9 @@ export default function CostBreakdownChart({
           role="img"
           aria-label={`Per-call cost breakdown for ${result.calls.length} LLM calls`}
           className="overflow-visible text-foreground"
-          onMouseLeave={() => setHoveredIndex(null)}
+          onPointerLeave={(e: React.PointerEvent) => {
+            if (e.pointerType !== "touch") setHoveredIndex(null);
+          }}
         >
           <title>Per-call operation costs</title>
           <Axis maximum={maxCallCost} ticks={[0, 0.5, 1]} />
@@ -415,7 +463,7 @@ export default function CostBreakdownChart({
                     />
                   );
                 })}
-                {hoveredIndex === index && (
+                {activeIndex === index && (
                   <rect
                     x={xForCall(index) - slotWidth / 2}
                     y={MARGIN.top}
@@ -434,6 +482,7 @@ export default function CostBreakdownChart({
                   width={Math.max(slotWidth, 1)}
                   height={PLOT_HEIGHT}
                   fill="transparent"
+                  pointerEvents="all"
                   tabIndex={0}
                   aria-label={`Call ${call.index}: ${call.label}, ${formatUsd(call.totalCost)}`}
                   {...targetProps("calls", index)}
@@ -479,7 +528,9 @@ export default function CostBreakdownChart({
           role="img"
           aria-label={`Cumulative conversation cost across ${result.calls.length} LLM calls`}
           className="overflow-visible text-foreground"
-          onMouseLeave={() => setHoveredIndex(null)}
+          onPointerLeave={(e: React.PointerEvent) => {
+            if (e.pointerType !== "touch") setHoveredIndex(null);
+          }}
         >
           <title>Cumulative operation and total costs</title>
           <Axis maximum={maxCumulativeCost} ticks={[0, 0.25, 0.5, 0.75, 1]} />
@@ -500,11 +551,23 @@ export default function CostBreakdownChart({
               />
             </g>
           ))}
+          {queryStartIndexes.map(index => (
+            <line
+              key={result.calls[index].turn}
+              x1={xForCall(index) - slotWidth / 2}
+              x2={xForCall(index) - slotWidth / 2}
+              y1={MARGIN.top}
+              y2={MARGIN.top + PLOT_HEIGHT}
+              className="stroke-foreground/45"
+              strokeDasharray="4 4"
+              pointerEvents="none"
+            />
+          ))}
           {result.calls.map((call, index) => {
             const x = xForCall(index);
             return (
               <g key={call.index}>
-                {hoveredIndex === index && (
+                {activeIndex === index && (
                   <rect
                     x={x - slotWidth / 2}
                     y={MARGIN.top}
@@ -523,6 +586,7 @@ export default function CostBreakdownChart({
                   width={Math.max(slotWidth, 1)}
                   height={PLOT_HEIGHT}
                   fill="transparent"
+                  pointerEvents="all"
                   tabIndex={0}
                   aria-label={`Call ${call.index}: cumulative cost ${formatUsd(cumulativeTotals[index])}`}
                   {...targetProps("cumulative", index)}
@@ -542,7 +606,7 @@ export default function CostBreakdownChart({
         <Legend result={result} total />
       </section>
 
-      {hoveredCall && hoveredIndex !== null && (
+      {hoveredCall && activeIndex !== null && (
         <div
           ref={tooltipRef}
           className="pointer-events-none absolute z-20 w-64 max-w-[calc(100%-1.5rem)] rounded border border-border bg-background p-3 text-foreground shadow-lg"
@@ -550,7 +614,7 @@ export default function CostBreakdownChart({
         >
           <Tooltip
             call={hoveredCall}
-            cumulativeCost={cumulativeTotals[hoveredIndex]}
+            cumulativeCost={cumulativeTotals[activeIndex]}
           />
         </div>
       )}

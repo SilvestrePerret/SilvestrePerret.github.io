@@ -1,26 +1,19 @@
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import CostBreakdownChart from "./CostBreakdownChart";
 import {
   DEFAULT_WORKFLOW,
   MODEL_PRESETS,
   OPERATION_META,
-  TOOL_TYPES,
   formatTokens,
   formatUsd,
   simulate,
   type ModelConfig,
   type SimulationResult,
-  type ToolType,
   type WorkflowShape,
 } from "./simulation";
 
 const DEFAULT_MODEL = "Claude Opus 4.8";
-const TOOL_LABELS: Record<ToolType, string> = {
-  read_file: "Read file",
-  edit_file: "Edit file",
-  run_command: "Run command",
-};
 const CONTROL_HELP = {
   modelPreset:
     "Loads this model's token prices and minimum cacheable prompt size.",
@@ -34,26 +27,68 @@ const CONTROL_HELP = {
   userTurns: "Number of user messages in the simulated conversation.",
   toolCallsPerTurn:
     "Number of tool exchanges completed after each user message.",
+  toolContextTokens:
+    "Average tokens added to the prompt context by each tool result. Larger values simulate heavy tools like file reads; smaller values simulate quick lookups.",
   cacheEnabled:
     "When enabled, matching prior prompt tokens use cached-input pricing and new prompt tokens use cache-write pricing. When disabled, every call reprocesses its full prompt at the uncached-input price.",
 } as const;
 
 function InfoTooltip({ label, text }: { label: string; text: string }) {
   const tooltipId = useId();
+  const [hoverOpen, setHoverOpen] = useState(false);
+  const [touchOpen, setTouchOpen] = useState(false);
+  const isOpen = hoverOpen || touchOpen;
+  const rootRef = useRef<HTMLSpanElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!touchOpen) return;
+    const handlePointerDown = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) {
+        setTouchOpen(false);
+        buttonRef.current?.blur();
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setTouchOpen(false);
+        buttonRef.current?.blur();
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [touchOpen]);
+
   return (
-    <span className="group relative inline-flex shrink-0">
+    <span ref={rootRef} className="relative inline-flex shrink-0">
       <button
+        ref={buttonRef}
         type="button"
         aria-label={`More information about ${label}`}
         aria-describedby={tooltipId}
+        aria-expanded={touchOpen}
         className="size-5 cursor-help rounded-full border border-border text-xs font-semibold text-foreground/65 focus:outline-2 focus:outline-accent"
+        onMouseEnter={() => setHoverOpen(true)}
+        onMouseLeave={() => setHoverOpen(false)}
+        onFocus={() => setHoverOpen(true)}
+        onBlur={() => setHoverOpen(false)}
+        onPointerUp={e => {
+          if (e.pointerType === "touch") {
+            e.preventDefault();
+            setTouchOpen(o => !o);
+          }
+        }}
       >
         i
       </button>
       <span
         id={tooltipId}
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden w-64 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded border border-border bg-background p-2 text-xs leading-relaxed text-foreground shadow-lg group-focus-within:block group-hover:block"
+        className={`pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 w-64 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded border border-border bg-background p-2 text-xs leading-relaxed text-foreground shadow-lg ${isOpen ? "block" : "hidden"}`}
       >
         {text}
       </span>
@@ -160,9 +195,9 @@ function PricingControls({
   onChange: (model: ModelConfig) => void;
 }) {
   const fields = [
-    ["uncachedInputPerM", "Uncached Input", CONTROL_HELP.uncachedInput],
-    ["cachedInputPerM", "Cached Read", CONTROL_HELP.cachedInput],
-    ["cacheWritePerM", "Cache Write", CONTROL_HELP.cacheWrite],
+    ["uncachedInputPerM", "Base (Uncached) Input", CONTROL_HELP.uncachedInput],
+    ["cachedInputPerM", "Cache Read", CONTROL_HELP.cachedInput],
+    ["cacheWritePerM", "Input + Cache Write", CONTROL_HELP.cacheWrite],
     ["outputPerM", "Output", CONTROL_HELP.output],
   ] as const;
   return (
@@ -211,39 +246,15 @@ function WorkflowControls({
   shape: WorkflowShape;
   onChange: (shape: WorkflowShape) => void;
 }) {
-  const updateMix = (changedType: ToolType, nextPercent: number) => {
-    const others = TOOL_TYPES.filter(toolType => toolType !== changedType);
-    const remaining = 100 - nextPercent;
-    const currentTotal = others.reduce(
-      (total, toolType) => total + shape.toolMix[toolType] * 100,
-      0
-    );
-    const firstPercent =
-      currentTotal === 0
-        ? Math.floor(remaining / 2)
-        : Math.round(
-            (remaining * shape.toolMix[others[0]] * 100) / currentTotal
-          );
-    onChange({
-      ...shape,
-      toolMix: {
-        ...shape.toolMix,
-        [changedType]: nextPercent / 100,
-        [others[0]]: firstPercent / 100,
-        [others[1]]: (remaining - firstPercent) / 100,
-      },
-    });
-  };
-
   return (
-    <section className="space-y-3 border-t border-border pt-4">
+    <section className="space-y-3">
       <div>
         <h3 className="text-base font-semibold">Workflow</h3>
         <p className="text-sm text-foreground/70">
           Conversation shape and tool activity
         </p>
       </div>
-      <div className="grid gap-4 rounded border border-border p-3">
+      <div className="grid gap-4 rounded border border-border p-3 sm:grid-cols-2">
         <Slider
           label="User turns"
           help={CONTROL_HELP.userTurns}
@@ -262,21 +273,18 @@ function WorkflowControls({
             onChange({ ...shape, toolCallsPerTurn })
           }
         />
-        <fieldset className="grid gap-3">
-          <legend className="mb-1 font-medium">Tool mix</legend>
-          {TOOL_TYPES.map(toolType => (
-            <Slider
-              key={toolType}
-              label={TOOL_LABELS[toolType]}
-              help={`Share of tool calls using ${TOOL_LABELS[toolType].toLowerCase()}. Assumes ${formatTokens(DEFAULT_WORKFLOW.tools[toolType].resultTokens)} input tokens from each tool result and ${formatTokens(DEFAULT_WORKFLOW.tools[toolType].requestTokens)} output tokens for each model-generated tool request.`}
-              value={Math.round(shape.toolMix[toolType] * 100)}
-              min={0}
-              max={100}
-              suffix="%"
-              onChange={value => updateMix(toolType, value)}
-            />
-          ))}
-        </fieldset>
+        <Slider
+          label="Tool context tokens"
+          help={CONTROL_HELP.toolContextTokens}
+          value={shape.toolContextTokens}
+          min={0}
+          max={5000}
+          step={10}
+          suffix=" tok"
+          onChange={toolContextTokens =>
+            onChange({ ...shape, toolContextTokens })
+          }
+        />
       </div>
     </section>
   );
@@ -417,10 +425,6 @@ function TotalSummary({
 
 const cloneShape = (shape: WorkflowShape): WorkflowShape => ({
   ...shape,
-  toolMix: { ...shape.toolMix },
-  tools: Object.fromEntries(
-    TOOL_TYPES.map(toolType => [toolType, { ...shape.tools[toolType] }])
-  ) as WorkflowShape["tools"],
   reasoning: { ...shape.reasoning },
 });
 
