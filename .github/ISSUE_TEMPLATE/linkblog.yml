@@ -1,0 +1,35 @@
+name: Share a link
+description: Publish a short linkblog entry.
+title: "[linkblog] "
+body:
+  - type: input
+    id: link-title
+    attributes:
+      label: Link title
+      description: The title shown on the site.
+      placeholder: An interesting article
+    validations:
+      required: true
+  - type: input
+    id: source-url
+    attributes:
+      label: Source URL
+      description: The full URL to share.
+      placeholder: https://example.com/article
+    validations:
+      required: true
+  - type: textarea
+    id: quote
+    attributes:
+      label: Quote
+      description: Optional excerpt from the source.
+  - type: textarea
+    id: comment
+    attributes:
+      label: Comment
+      description: Optional personal note.
+  - type: input
+    id: via
+    attributes:
+      label: Via
+      description: Optional person, publication, or URL that led you to this link.

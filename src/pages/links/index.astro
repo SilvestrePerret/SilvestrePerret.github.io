@@ -1,0 +1,24 @@
+---
+import { getCollection } from "astro:content";
+import Footer from "@/components/Footer.astro";
+import Header from "@/components/Header.astro";
+import LinkblogCard from "@/components/LinkblogCard.astro";
+import Layout from "@/layouts/Layout.astro";
+import Main from "@/layouts/Main.astro";
+import { SITE } from "@/config";
+
+const links = (await getCollection("linkblog", ({ data }) => !data.draft)).sort(
+  (first, second) =>
+    second.data.pubDatetime.getTime() - first.data.pubDatetime.getTime()
+);
+---
+
+<Layout title={`Links | ${SITE.title}`} description="Links worth sharing.">
+  <Header />
+  <Main pageTitle="Links" pageDesc="Things I have found worth sharing.">
+    <ul>
+      {links.map(link => <LinkblogCard {...link} />)}
+    </ul>
+  </Main>
+  <Footer />
+</Layout>

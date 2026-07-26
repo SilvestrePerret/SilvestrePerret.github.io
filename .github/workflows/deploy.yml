@@ -5,6 +5,10 @@ on:
   # Using a different branch name? Replace `main` with your branch’s name
   push:
     branches: [main]
+  # Commits made with GITHUB_TOKEN do not emit a new push workflow event.
+  workflow_run:
+    workflows: [Publish linkblog entry]
+    types: [completed]
   # Allows you to run this workflow manually from the Actions tab on GitHub.
   workflow_dispatch:
 
@@ -16,6 +20,7 @@ permissions:
 
 jobs:
   build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout your repository using git

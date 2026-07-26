@@ -6,18 +6,22 @@ import Footer from "@/components/Footer.astro";
 import Socials from "@/components/Socials.astro";
 import LinkButton from "@/components/LinkButton.astro";
 import Card from "@/components/Card.astro";
+import LinkblogCard from "@/components/LinkblogCard.astro";
 import Hr from "@/components/Hr.astro";
-import getSortedPosts from "@/utils/getSortedPosts";
+import postFilter from "@/utils/postFilter";
 // import IconRss from "@/assets/icons/IconRss.svg"; // TODO: enable rss feed
 import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
 import { SITE } from "@/config";
 import { SOCIALS } from "@/constants";
 
-const posts = await getCollection("blog");
-
-const sortedPosts = getSortedPosts(posts);
-// const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
-const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
+const posts = await getCollection("blog", postFilter);
+const links = await getCollection("linkblog", ({ data }) => !data.draft);
+const recentEntries = [...posts, ...links]
+  .filter(entry => entry.collection !== "blog" || !entry.data.featured)
+  .sort(
+    (first, second) =>
+      second.data.pubDatetime.getTime() - first.data.pubDatetime.getTime()
+  );
 ---
 
 <Layout>
@@ -56,41 +60,30 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
 
     <Hr />
 
-    <!-- {
-      featuredPosts.length > 0 && (
-        <>
-          <section id="featured" class="pt-12 pb-6">
-            <h2 class="text-2xl font-semibold tracking-wide">Featured</h2>
-            <p>A few projects I like to highlight:</p>
-            <ul>
-              {featuredPosts.map(data => (
+    <section id="recent-posts" class="pt-12 pb-6">
+      <h2 class="text-2xl font-semibold tracking-wide">Recent</h2>
+      <ul>
+        {
+          recentEntries.map(
+            (data, index) =>
+              index < SITE.postPerIndex &&
+              (data.collection === "blog" ? (
                 <Card variant="h3" {...data} />
-              ))}
-            </ul>
-          </section>
-          {recentPosts.length > 0 && <Hr />}
-        </>
-      )
-    } -->
-
-    {
-      (
-        // recentPosts.length > 0 && (
-        <section id="recent-posts" class="pt-12 pb-6">
-          <h2 class="text-2xl font-semibold tracking-wide">Recent Posts</h2>
-          <ul>
-            {recentPosts.map(
-              (data, index) =>
-                index < SITE.postPerIndex && <Card variant="h3" {...data} />
-            )}
-          </ul>
-        </section>
-      )
-    }
+              ) : (
+                <LinkblogCard {...data} />
+              ))
+          )
+        }
+      </ul>
+    </section>
 
     <div class="my-8 text-center">
       <LinkButton href="/posts/">
         All Posts
+        <IconArrowRight class="inline-block rtl:-rotate-180" />
+      </LinkButton>
+      <LinkButton href="/links/" class="ms-4">
+        All Links
         <IconArrowRight class="inline-block rtl:-rotate-180" />
       </LinkButton>
     </div>

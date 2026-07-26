@@ -1,0 +1,118 @@
+name: Publish linkblog entry
+
+on:
+  issues:
+    types: [opened, reopened]
+  repository_dispatch:
+    types: [publish-linkblog]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  publish:
+    if: >-
+      github.event_name == 'repository_dispatch' ||
+      (startsWith(github.event.issue.title, '[linkblog]') &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.issue.author_association))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create linkblog entry
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const eventIsIssue = context.eventName === "issues";
+            const body = context.payload.issue?.body ?? "";
+
+            const getIssueField = label => {
+              const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const match = body.match(
+                new RegExp(`(?:^|\\n)### ${escapedLabel}\\s*\\n([\\s\\S]*?)(?=\\n### |$)`)
+              );
+              const value = match?.[1].trim();
+              return value && value !== "_No response_" ? value : undefined;
+            };
+
+            const payload = context.payload.client_payload ?? {};
+            const entry = eventIsIssue
+              ? {
+                  title: getIssueField("Link title"),
+                  sourceUrl: getIssueField("Source URL"),
+                  quote: getIssueField("Quote"),
+                  comment: getIssueField("Comment"),
+                  via: getIssueField("Via"),
+                  suffix: String(context.payload.issue.number),
+                }
+              : {
+                  title: payload.title,
+                  sourceUrl: payload.sourceUrl ?? payload.url,
+                  quote: payload.quote,
+                  comment: payload.comment,
+                  via: payload.via,
+                  suffix: payload.id ? String(payload.id) : String(Date.now()),
+                };
+
+            if (typeof entry.title !== "string" || !entry.title.trim()) {
+              throw new Error("A linkblog entry needs a title.");
+            }
+
+            let sourceUrl;
+            try {
+              sourceUrl = new URL(entry.sourceUrl);
+            } catch {
+              throw new Error("Source URL must be a valid absolute URL.");
+            }
+            if (!/^https?:$/.test(sourceUrl.protocol)) {
+              throw new Error("Source URL must use HTTP or HTTPS.");
+            }
+
+            const text = value =>
+              typeof value === "string" && value.trim() ? value.trim() : undefined;
+            const title = entry.title.trim();
+            const now = new Date();
+            const date = now.toISOString().slice(0, 10);
+            const slug = title
+              .toLowerCase()
+              .normalize("NFKD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-+|-+$/g, "")
+              .slice(0, 80) || "link";
+            const path = `src/data/linkblog/${date}-${slug}-${entry.suffix}.md`;
+            const frontmatter = {
+              title,
+              sourceUrl: sourceUrl.toString(),
+              pubDatetime: now.toISOString(),
+              ...(text(entry.quote) && { quote: text(entry.quote) }),
+              ...(text(entry.comment) && { comment: text(entry.comment) }),
+              ...(text(entry.via) && { via: text(entry.via) }),
+            };
+            const content = `---\n${Object.entries(frontmatter)
+              .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+              .join("\n")}\n---\n`;
+
+            await github.rest.repos.createOrUpdateFileContents({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              path,
+              message: `Publish linkblog: ${title}`,
+              content: Buffer.from(content).toString("base64"),
+            });
+
+            if (eventIsIssue) {
+              const issueNumber = context.payload.issue.number;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `Published as \`${path}\`.`,
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                state: "closed",
+                state_reason: "completed",
+              });
+            }
