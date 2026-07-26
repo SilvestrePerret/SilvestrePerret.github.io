@@ -10,14 +10,14 @@ const { title, sourceUrl, pubDatetime, quote, comment, via } = data;
 const viaUrl = via && URL.canParse(via) ? via : undefined;
 ---
 
-<li class="my-8 border-s-2 border-accent/50 ps-5">
+<li class="my-6">
   <a
     href={sourceUrl}
     target="_blank"
     rel="noreferrer"
     class="text-lg font-medium text-accent decoration-dashed underline-offset-4 hover:underline focus-visible:no-underline focus-visible:underline-offset-0"
   >
-    {title}
+    <span class="text-foreground opacity-90">&gt;</span> External: {title}
   </a>
   <Datetime {pubDatetime} timezone={undefined} modDatetime={undefined} />
   {

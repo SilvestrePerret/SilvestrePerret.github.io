@@ -19,9 +19,18 @@
 
 - This is a statically generated Astro 5 site. Use `.astro` components for static or server-rendered UI and React only when a widget needs client-side state or lifecycle behavior.
 - React components must be hydrated from Astro or MDX with the least eager suitable `client:*` directive. Existing examples are in [src/data/blog/power-laws.mdx](src/data/blog/power-laws.mdx).
-- Markdown is for static posts; MDX is for posts that embed components or custom markup. Blog collection rules and frontmatter types live in [src/content.config.ts](src/content.config.ts).
+- Markdown is for static posts; MDX is for posts that embed components or custom markup. Blog and linkblog collection rules and frontmatter types live in [src/content.config.ts](src/content.config.ts).
 - Shared page chrome belongs in [src/layouts](src/layouts) and [src/components](src/components). Site-wide settings belong in [src/config.ts](src/config.ts); social and sharing links belong in [src/constants.ts](src/constants.ts).
 - Post URLs are derived from file paths, not frontmatter slugs. Preserve the routing logic in [src/utils/getPath.ts](src/utils/getPath.ts) and [src/utils/slugify.ts](src/utils/slugify.ts).
+
+## Linkblog
+
+- Linkblog entries are short external-link shares stored as Markdown in [src/data/linkblog](src/data/linkblog). Their schema requires `title`, `sourceUrl`, and `pubDatetime`; `quote`, `comment`, `via`, and `draft` are optional.
+- [src/components/LinkblogCard.astro](src/components/LinkblogCard.astro) renders entries directly in the home feed and on [src/pages/links/index.astro](src/pages/links/index.astro). Linkblog entries do not have individual detail pages.
+- Publishing starts with [.github/ISSUE_TEMPLATE/linkblog.yml](.github/ISSUE_TEMPLATE/linkblog.yml). Keep its field headings synchronized with the parser in [.github/workflows/publish-linkblog.yml](.github/workflows/publish-linkblog.yml).
+- The publish workflow accepts trusted issues whose title starts with `[linkblog]`, plus `repository_dispatch` events of type `publish-linkblog`. It validates the URL, creates the content file with `GITHUB_TOKEN`, and closes issue-based submissions.
+- Emit `pubDatetime` as an unquoted ISO timestamp in generated YAML so Astro parses it as a `Date`. Other frontmatter strings are JSON-quoted for safe YAML escaping, and `_No response_` from empty Issue Form fields must be omitted.
+- Commits made by the publish workflow do not trigger another `push` workflow. [.github/workflows/deploy.yml](.github/workflows/deploy.yml) therefore also deploys after a successful `Publish linkblog entry` workflow run.
 
 ## Conventions
 
