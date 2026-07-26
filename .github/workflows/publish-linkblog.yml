@@ -89,7 +89,9 @@ jobs:
               ...(text(entry.via) && { via: text(entry.via) }),
             };
             const content = `---\n${Object.entries(frontmatter)
-              .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+              .map(([key, value]) =>
+                key === "pubDatetime" ? `${key}: ${value}` : `${key}: ${JSON.stringify(value)}`
+              )
               .join("\n")}\n---\n`;
 
             await github.rest.repos.createOrUpdateFileContents({
